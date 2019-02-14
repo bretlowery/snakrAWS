@@ -1,0 +1,7 @@
+bs4
+ipaddress
+requests
+pdfminer.six
+psycopg2
+python-opengraph
+python-json-logger
