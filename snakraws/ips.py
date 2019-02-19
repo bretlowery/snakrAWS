@@ -11,6 +11,7 @@ import ipaddress
 import inspect
 from urllib.parse import urlparse
 
+from snakraws.utils import get_hash
 
 class SnakrIP:
 
@@ -84,14 +85,21 @@ class SnakrIP:
             errors = "Missing settings.GEOLOCATION_API_URL"
 
         # expose the geo info as parent object attributes
-        for k, v in jsondata.items():
+        i = jsondata.items()
+        for k, v in i:
             if not is_error:
                 setattr(self, k, v)
+                self.geodict[k] = v
+                if k in ["city", "continent_name", "country_name", "region_name", "zip"] and isinstance(v, str):
+                    k = "%s_%s" % (k, "hash")
+                    v = get_hash(v.lower())
+                    setattr(self, k, v)
+                    self.geodict[k] = v
             else:
                 setattr(self, k, None)
         return is_error, errors
 
-    def __init__(self, request):
+    def __init__(self, request, **kwargs):
         """
         get the client ip from the request META
         """
@@ -99,44 +107,47 @@ class SnakrIP:
         self.ip = None
         self.ip_source = 'unknown'
         self.is_error = None
-        whichip = None
+        self.ip_source = None
+        self.geodict = {}
+
+        geolocate = kwargs.pop('geolocate', True)
 
         ips = getattr(settings, 'FAKE_IP', None)
         if ips:
-            whichip = "FAKE_IP"
+            self.ip_source = "FAKE_IP"
             ip_alias = True
         elif isinstance(request, str):
             ips = ipaddress.ip_address(request).exploded
-            whichip = "LITERAL_IP"
+            self.ip_source = "LITERAL_IP"
             ip_alias = True
 
         if not ips:
-            whichip = "HTTP_X_FORWARDED_FOR"
+            self.ip_source = "HTTP_X_FORWARDED_FOR"
             try:
-                ips = request.META.get(whichip)
+                ips = request.META.get(self.ip_source)
             except Exception as e:
-                self.errors = self.errors + "%s = %s " % (whichip, str(e))
+                self.errors = self.errors + "%s = %s " % (self.ip_source, str(e))
                 pass
             if not ips:
-                whichip = "REMOTE_ADDR"
+                self.ip_source = "REMOTE_ADDR"
                 try:
-                    ips = request.META.get(whichip)
+                    ips = request.META.get(self.ip_source)
                 except Exception as e:
-                    self.errors = self.errors + "%s = %s " % (whichip, str(e))
+                    self.errors = self.errors + "%s = %s " % (self.ip_source, str(e))
                     pass
                 if not ips:
-                    whichip = "HTTP_X_REAL_IP"
+                    self.ip_source = "HTTP_X_REAL_IP"
                     try:
-                        ips = request.META.get(whichip)
+                        ips = request.META.get(self.ip_source)
                     except Exception as e:
-                        self.errors = self.errors + "%s = %s " % (whichip, str(e))
+                        self.errors = self.errors + "%s = %s " % (self.ip_source, str(e))
                         pass
                     if not ips:
-                        whichip = "X_REAL_IP"
+                        self.ip_source = "X_REAL_IP"
                         try:
-                            ips = request.META.get(whichip)
+                            ips = request.META.get(self.ip_source)
                         except Exception as e:
-                            self.errors = self.errors + "%s = %s " % (whichip, str(e))
+                            self.errors = self.errors + "%s = %s " % (self.ip_source, str(e))
                             pass
 
         if ips:
@@ -144,13 +155,13 @@ class SnakrIP:
             if not self.errors:
                 self.is_error = False
             else:
-                whichip = None
+                self.ip_source = None
         elif 'PYCHARM' in os.environ and not ip_alias:
             trueip = "127.0.0.1"
-            whichip = None
+            self.ip_source = None
         else:
             trueip = None
-            whichip = None
+            self.ip_source = None
         if trueip and not self.errors:
             try:
                 ip_obj = ipaddress.ip_address(trueip)
@@ -163,14 +174,15 @@ class SnakrIP:
 
         # expose some ip info as object attributes
         self.ip = ip_obj
-        for n, v in inspect.getmembers(ip_obj):
+        self.ip_hash = get_hash(self.ip.exploded)
+        m = inspect.getmembers(ip_obj)
+        for n, v in m:
             if "is_" in n and "_is_" not in n:
                 setattr(self, n, v)
-        if not self.is_error:
-            is_geo_error, geo_errors = self._geolocate(ip_obj)
-            if is_geo_error:
-                self.is_error = is_geo_error
-                self.errors = geo_errors
+                
+        # if geolocation requested, add geolocation info to the SnakrIP instance
+        if not self.is_error and geolocate:
+            self.is_error, self.errors = self._geolocate(ip_obj)
 
 
 if __name__ == "__main__":

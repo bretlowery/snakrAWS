@@ -1,6 +1,6 @@
 '''
 Implements a Singleton pattern class to be inherited by other classes.
-To make child classes singletons, do this:
+To make_short child classes singletons, do this:
 
 from patterns.singleton import Singleton
 

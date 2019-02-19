@@ -2,29 +2,40 @@
 ShortURLs.py contains the logic necessary to take a short URL and redirect to its long URL equivalent. It also contains the logic
 needed to construct a short URL when a long URL is submitted to Snakr.
 '''
-import urllib
-
+from urllib.parse import urlparse, urlunparse
 from django.db import transaction as xaction
 
-import settings
-from snakraws.models import DimShortURL, DimLongURL
-from snakraws.loggr import SnakrEventLogger
-from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl
+from snakraws import settings
+from snakraws.loggr import SnakrLogger
+from snakraws.security import get_useragent_or_403_if_bot
+from snakraws.models import ShortURLs, LongURLs
+from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer
 
 
 class ShortURL:
     """Validates and processes the short URL in the GET request."""
 
     def __init__(self, request, *args, **kwargs):
+        
+        self.event = SnakrLogger()
+        bot_name, self.useragent = get_useragent_or_403_if_bot(request)
+        if bot_name:
+            raise self.event.log(request=request, event_type='B', messagekey='ROBOT', value='Known Bot {%}' % bot_name, status_code=-403)
+        try:
+            self.host = get_host(request, False)
+            self.referer = get_referer(request, False)
+        except Exception as e:
+            raise self.event.log(messagekey='REQUEST_INVALID', status_code=400, request=None, message=str(e))
+
         self.shorturl = ''
         self.shorturl_is_preencoded = False
         self.normalized_shorturl = ''
         self.normalized_shorturl_scheme = ''
+        self.hash = 0
         self.id = -1
-        self.event = SnakrEventLogger()
         return
 
-    def make(self, normalized_longurl_scheme, vanity_path):
+    def make_short(self, normalized_longurl_scheme, vanity_path):
         #
         # Make a new short URL
         #
@@ -34,6 +45,8 @@ class ShortURL:
         # 1. Build the front of the short url. Match the scheme to the one used by the longurl.
         #    This is done so that a http longurl --> http shorturl, and a https long url --> https short url.
         #
+        if settings.SITE_MODE == 'dev':
+            normalized_longurl_scheme = normalized_longurl_scheme.replace('s', '')
         if normalized_longurl_scheme in ('https', 'ftps', 'sftp'):
             shorturl_prefix = normalized_longurl_scheme + '://' + settings.SECURE_SHORTURL_HOST + '/'
         else:
@@ -67,7 +80,7 @@ class ShortURL:
                 else:
                     shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
                 shash = get_shorturlhash(shorturl_candidate)
-                s = DimShortURL.objects.filter(id=shash)
+                s = ShortURLs.objects.filter(hash=shash)
                 sc = s.count()
                 if use_exact_vanity_path:
                     if sc != 0:
@@ -82,22 +95,22 @@ class ShortURL:
         self.shorturl = shorturl_candidate
         self.normalized_shorturl = self.shorturl
         self.normalized_shorturl_scheme = normalized_longurl_scheme
-        self.id = shash
+        self.hash = shash
         return self.normalized_shorturl
 
     @xaction.atomic
-    def to_long(self, request):
+    def get_long(self, request):
         self.shorturl = ''
         self.shorturl_is_preencoded = False
         self.normalized_shorturl = ''
         self.normalized_shorturl_scheme = ''
-        self.id = -1
+        self.hash = 0
         #
         # cleanse the passed short url
         #
         surl = request.build_absolute_uri()
         dsurl = get_decodedurl(surl)
-        sparts = urllib.parse(dsurl)
+        sparts = urlparse(dsurl)
         if surl == dsurl:
             preencoded = False
         else:
@@ -105,7 +118,7 @@ class ShortURL:
             l = dsurl
         self.normalized_shorturl_scheme = sparts.scheme.lower()
         self.shorturl_is_preencoded = preencoded
-        self.normalized_shorturl = urllib.unparse(sparts)
+        self.normalized_shorturl = urlunparse(sparts)
         if self.normalized_shorturl.endswith("/"):
             self.normalized_shorturl = self.normalized_shorturl[:-1]
         self.shorturl = surl
@@ -124,9 +137,9 @@ class ShortURL:
         #
         # Lookup the short url
         #
-        self.id = get_shorturlhash(self.normalized_shorturl)
+        self.hash = get_shorturlhash(self.normalized_shorturl)
         try:
-            s = DimShortURL.objects.get(id=self.id)
+            s = ShortURLs.objects.get(hash=self.hash)
             if not s:
                 raise self.event.log(request=request, messagekey='SHORT_URL_NOT_FOUND', value=self.shorturl, status_code=400)
         except:
@@ -137,21 +150,34 @@ class ShortURL:
         #
         # If the short URL is not active, 404
         #
-        if s.is_active != 'Y':
+        if not s.is_active:
             raise self.event.log(request=request, messagekey='HTTP_404', value=self.shorturl, status_code=404)
         #
         # Lookup the matching long url by the short url's id.
         # If it doesn't exist, 404.
         # If it does, decode it.
         #
-        l = DimLongURL.objects.get(id=s.longurl_id)
+        l = LongURLs.objects.get(id=s.longurl_id)
         if not l:
-            raise self.event.log(request=request, messagekey='HTTP_404', value='ERROR, HTTP 404 longurl not found', longurl_id=s.longurl_id, shorturl_id=self.id, status_code=422)
+            raise self.event.log(request=request,
+                                 messagekey='HTTP_404',
+                                 value='ERROR, HTTP 404 longurl not found',
+                                 longurl=l,
+                                 shorturl=s,
+                                 status_code=422)
         longurl = get_decodedurl(l.longurl)
         #
         # Log that a 301 request to the matching long url is about to occur
         #
-        self.event.log(request=request, event_type='S', messagekey='HTTP_301', value=longurl, longurl_id=s.longurl_id, shorturl_id=self.id, status_code=301)
+        self.event.log(
+                request=request,
+                event_type='S',
+                messagekey='HTTP_301',
+                value=longurl,
+                longurl=l,
+                shorturl=s,
+                status_code=301
+        )
         #
         # Return the longurl
         #

@@ -5,9 +5,9 @@ import json
 
 from django.template import RequestContext
 from django.shortcuts import render
-from django.http import HttpResponsePermanentRedirect, Http404, HttpResponse
+from django.http import HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest
 
-import settings
+from snakraws import settings
 from snakraws.shorturls import ShortURL
 from snakraws.longurls import LongURL
 from snakraws.parsers import Parsers
@@ -22,18 +22,20 @@ def request_handler(request):
         return post_handler(request)
     elif request.method == "GET":
         return get_handler(request)
+    else:
+        return HttpResponseBadRequest(settings.CANONICAL_MESSAGES["MALFORMED_REQUEST"])
 
 
 def get_handler(request):
     #
-    # create an instance of the ShortURL object, validate the short URL,
-    # and if successful load the ShortURL instance with it
+    # create an instance of the ShortURLs object, validate the short URL,
+    # and if successful load the ShortURLs instance with it
     #
     s = ShortURL(request)
     #
     # lookup the long url previously used to generate the short url
     #
-    longurl = s.to_long(request)
+    longurl = s.get_long(request)
     #
     # if found, 302 to it; otherwise, 404
     #
@@ -58,16 +60,16 @@ def post_handler(request):
     #
     # check for unfriendly bot first
     #
-    #self._botdetector.if_bot_then_403(request)
+    #self._botdetector.get_useragent_or_403_if_bot(request)
     #
-    # create an instance of the LongURL object, validate the long URL, and if successful load the LongURL instance with it
+    # create an instance of the LongURLs object, validate the long URL, and if successful load the LongURLs instance with it
     #
     l = LongURL(request)
     #
     # generate the shorturl and either persist both the long and short urls if new,
     # or lookup the matching short url if it already exists (i.e. the long url was submitted a 2nd or subsequent time)
     #
-    shorturl = l.to_short(request)
+    shorturl = l.get_or_make_short(request)
     #
     # prepare to return the shorturl as JSON
     #
@@ -106,3 +108,4 @@ def post_handler(request):
 
 def test_post_handler(self, request, *args, **kwargs):
     return HttpResponse("<H2>Test value: {%s}</H2>", content_type="text/html")
+

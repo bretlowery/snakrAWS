@@ -58,12 +58,12 @@ def get_setting(setting, default=None):
 
 def get_encodedurl(myurl):
     """Returns an encoded version of the passed URL."""
-    return quote(myurl).encode('utf8').replace('%3A//', '://')
+    return quote(myurl).replace('%3A//', '://')
 
 
 def get_decodedurl(myurl):
     """Returns an decoded version of the passed URL."""
-    return unquote(myurl.decode('utf8'))
+    return unquote(myurl)
 
 
 def get_longurlhash(myurl):
@@ -92,8 +92,10 @@ def is_url_valid(myurl):
     rtn = True
     try:
         # workaroud for django 1.5.11 bug on %20 encoding causing urlvalidation to fail
-        valid = _URL_VALIDATOR(get_decodedurl(myurl.replace("%20", "_")))
-    except:
+        #valid = _URL_VALIDATOR(get_decodedurl(myurl.replace("%20", "_")))
+        decoded_url = get_decodedurl(myurl)
+        validated_url = _URL_VALIDATOR(decoded_url)
+    except Exception as e:
         rtn = False
         pass
     return rtn
@@ -136,14 +138,25 @@ def true_or_false(value):
     return switch(value)
 
 
+def get_useragent(request, normalize=True):
+    rtn = request.META.get('HTTP_USER_AGENT', 'unknown')
+    return rtn.lower() if normalize else rtn
+
+
+def get_host(request, normalize=True):
+    rtn = request.META.get('HTTP_HOST', 'unknown')
+    return rtn.lower() if normalize else rtn
+
+
+def get_referer(request, normalize=True):
+    rtn = request.META.get('HTTP_REFERER', 'unknown')
+    return rtn.lower() if normalize else rtn
+
+
 def get_meta(request, normalize=True):
-    http_host = request.META.get('HTTP_HOST', 'unknown')
-    http_useragent = request.META.get('HTTP_USER_AGENT', 'unknown')
-    http_referer = request.META.get('HTTP_REFERER', 'unknown')
-    if normalize:
-        return http_host.lower(), http_useragent.lower(), http_referer.lower()
-    else:
-        return http_host, http_useragent, http_referer
+    return get_host(request, normalize), get_useragent(request, normalize), get_referer(request, normalize)
+
+
 
 
 
