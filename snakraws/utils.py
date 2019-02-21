@@ -2,15 +2,15 @@
 utils.py contains helper functions used throughout the codebase.
 '''
 from django.conf import settings
-from django.core.validators import URLValidator
 
 import random
-from urllib.parse import urlparse, quote, unquote
 import json
 import mimetypes
+from urllib.parse import urlparse, quote, unquote
 
+from validator_collection import validators
+from validator_collection.errors import InvalidURLError
 
-_URL_VALIDATOR = URLValidator()
 
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
 # See http://www.isthe.com/chongo/tech/comp/fnv/index.html for math-y details.
@@ -89,16 +89,18 @@ def get_shortpathcandidate(**kwargs):
 
 
 def is_url_valid(myurl):
-    rtn = True
+    test = myurl
+    is_valid = False
     try:
-        # workaroud for django 1.5.11 bug on %20 encoding causing urlvalidation to fail
-        #valid = _URL_VALIDATOR(get_decodedurl(myurl.replace("%20", "_")))
-        decoded_url = get_decodedurl(myurl)
-        validated_url = _URL_VALIDATOR(decoded_url)
-    except Exception as e:
-        rtn = False
+        # 2-21-2019 bml workaround for current bug in validator-collection v1.3.2 (reported as issue #28)
+        # where http(s)://localhost:port-number.... is flagged as invalid
+        if not (getattr(settings, "SITE_MODE", "prod") == "dev" and '://localhost:' in test):
+            test = validators.url(test, allow_special_ips=True)
+        if test:
+            is_valid = True
+    except InvalidURLError:
         pass
-    return rtn
+    return is_valid
 
 
 def initurlparts():

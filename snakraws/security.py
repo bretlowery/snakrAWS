@@ -6,8 +6,9 @@ from django.core.cache import cache
 from django.db.models.query_utils import Q
 
 from snakraws import settings
-from snakraws.utils import get_useragent, get_hash
+from snakraws.utils import get_useragent
 from snakraws.models import Blacklist
+
 
 def get_useragent_or_403_if_bot(request):
     #
@@ -28,65 +29,75 @@ def get_useragent_or_403_if_bot(request):
     return bot_name, get_useragent(request, False)
 
 
-def is_blacklisted(ipobj, deviceid=None, hostname=None, referer=None, useragent=None):  # device support TBD
+def is_blacklisted(
+        dimcity=None,
+        dimcontinent=None,
+        dimcountry=None,
+        dimdevice=None,
+        dimip=None,
+        dimhost=None,
+        dimpostalcode=None,
+        dimreferer=None,
+        dimregion=None,
+        dimuseragent=None):
     blquery = Q(is_active=True)
     try:
-        if ipobj.city_name_hash:
-            blquery = blquery & (Q(city_id=ipobj.city_name_hash) | Q(city_id=0))
+        if dimcity:
+            blquery = blquery & (Q(city_id=dimcity.id) | Q(city_id=0))
     except:
         blquery = blquery & Q(city_id=0)
         pass
     try:
-        if ipobj.continent_name_hash:
-            blquery = blquery & (Q(continent_id=ipobj.continent_name_hash) | Q(continent_id=0))
+        if dimcontinent:
+            blquery = blquery & (Q(continent_id=dimcontinent.id) | Q(continent_id=0))
     except:
         blquery = blquery & Q(continent_id=0)
         pass
     try:
-        if ipobj.country_name_hash:
-            blquery = blquery & (Q(country_id=ipobj.country_name_hash) | Q(country_id=0))
+        if dimcountry:
+            blquery = blquery & (Q(country_id=dimcountry.id) | Q(country_id=0))
     except:
         blquery = blquery & Q(country_id=0)
         pass
     try:
-        if deviceid:
-            blquery = blquery & (Q(device_id=get_hash(deviceid.strip().lower())) | Q(device_id=0))
+        if dimdevice:
+            blquery = blquery & (Q(device_id=dimdevice.id) | Q(device_id=0))
     except:
         blquery = blquery & Q(device_id=0)
         pass
     try:
-        if hostname:
-            blquery = blquery & (Q(host_id=get_hash(hostname.strip().lower())) | Q(host_id=0))
+        if dimhost:
+            blquery = blquery & (Q(host_id=dimhost.id) | Q(host_id=0))
     except:
         blquery = blquery & Q(host_id=0)
         pass
     try:
-        if ipobj:
-            blquery = blquery & (Q(ip_id=ipobj.ip_hash) | Q(ip_id=0))
+        if dimip:
+            blquery = blquery & (Q(ip_id=dimip.id) | Q(ip_id=0))
     except:
         blquery = blquery & Q(ip_id=0)
         pass
     try:
-        if ipobj.zip_hash:
-            blquery = blquery & (Q(postalcode_id=ipobj.zip_hash) | Q(postalcode_id=0))
+        if dimpostalcode:
+            blquery = blquery & (Q(postalcode_id=dimpostalcode.id) | Q(postalcode_id=0))
     except:
         blquery = blquery & Q(postalcode_id=0)
         pass
     try:
-        if referer:
-            blquery = blquery & (Q(referer_id=get_hash(referer.strip().lower())) | Q(referer_id=0))
+        if dimreferer:
+            blquery = blquery & (Q(referer_id=dimreferer.id) | Q(referer_id=0))
     except:
         blquery = blquery & Q(referer_id=0)
         pass
     try:
-        if ipobj.region_name_hash:
-            blquery = blquery & (Q(region_id=ipobj.region_name_hash) | Q(region_id=0))
+        if dimregion:
+            blquery = blquery & (Q(region_id=dimregion.id) | Q(region_id=0))
     except:
         blquery = blquery & Q(region_id=0)
         pass
     try:
-        if useragent:
-            blquery = blquery & (Q(useragent_id=get_hash(useragent.lower())) | Q(useragent_id=0))
+        if dimuseragent:
+            blquery = blquery & (Q(useragent_id=dimuseragent.id) | Q(useragent_id=0))
     except:
         blquery = blquery & Q(useragent_id=0)
         pass
@@ -94,3 +105,4 @@ def is_blacklisted(ipobj, deviceid=None, hostname=None, referer=None, useragent=
         return True
     else:
         return False
+

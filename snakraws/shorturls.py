@@ -6,17 +6,15 @@ from urllib.parse import urlparse, urlunparse
 from django.db import transaction as xaction
 
 from snakraws import settings
-from snakraws.loggr import SnakrLogger
+from snakraws.logging import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.models import ShortURLs, LongURLs
-from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer
-
+from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid
 
 class ShortURL:
     """Validates and processes the short URL in the GET request."""
 
     def __init__(self, request, *args, **kwargs):
-        
         self.event = SnakrLogger()
         bot_name, self.useragent = get_useragent_or_403_if_bot(request)
         if bot_name:
@@ -27,20 +25,18 @@ class ShortURL:
         except Exception as e:
             raise self.event.log(messagekey='REQUEST_INVALID', status_code=400, request=None, message=str(e))
 
-        self.shorturl = ''
+        self.shorturl = None
         self.shorturl_is_preencoded = False
-        self.normalized_shorturl = ''
-        self.normalized_shorturl_scheme = ''
-        self.hash = 0
+        self.normalized_shorturl = None
+        self.normalized_shorturl_scheme = None
+        self.hash = None
         self.id = -1
         return
+
 
     def make_short(self, normalized_longurl_scheme, vanity_path):
         #
         # Make a new short URL
-        #
-        if settings.MAX_RETRIES < 1 or settings.MAX_RETRIES > 3:
-            return self.event.log(messagekey='ILLEGAL_MAX_RETRIES', status_code=400)
         #
         # 1. Build the front of the short url. Match the scheme to the one used by the longurl.
         #    This is done so that a http longurl --> http shorturl, and a https long url --> https short url.
@@ -57,38 +53,18 @@ class ShortURL:
         #    b. If no vanity path was passed, build a path with SHORTURL_PATH_SIZE characters from SHORTURL_PATH_ALPHABET.
         #    c. Does it exist already? If so, regenerate it and try again.
         #
-        use_exact_vanity_path = False
-        vp = ''
-        if vanity_path:
-            if vanity_path[0] == '!':
-                use_exact_vanity_path = True
-                vp = vanity_path[1:]
-            else:
-                use_exact_vanity_path = False
-                vp = vanity_path
-        shorturl_candidate = ''
-        shash = 0
-        i = 0
-        sc = 1
-        while i <= settings.MAX_RETRIES and sc != 0:
-            i += 1
-            if i <= settings.MAX_RETRIES:
-                if use_exact_vanity_path:
-                    shorturl_candidate = shorturl_prefix + vp
-                elif vp:
-                    shorturl_candidate = shorturl_prefix + vp + '-' + get_shortpathcandidate(digits_only=True)
-                else:
-                    shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
-                shash = get_shorturlhash(shorturl_candidate)
-                s = ShortURLs.objects.filter(hash=shash)
-                sc = s.count()
-                if use_exact_vanity_path:
-                    if sc != 0:
-                        raise self.event.log(messagekey='VANITY_PATH_EXISTS', status_code=400)
-                    break
-
-        if i > settings.MAX_RETRIES:
-            raise self.event.log(messagekey='EXCEEDED_MAX_RETRIES', status_code=400)
+        vp = vanity_path.strip()
+        if vp:
+            shorturl_candidate = shorturl_prefix + vp
+        else:
+            shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
+        if not is_url_valid(shorturl_candidate):
+            raise self.event.log(messagekey='SHORT_URL_INVALID', value=shorturl_candidate, status_code=400)
+        shash = get_shorturlhash(shorturl_candidate)
+        s = ShortURLs.objects.filter(hash=shash)
+        sc = s.count()
+        if sc != 0:
+            raise self.event.log(messagekey='VANITY_PATH_EXISTS', status_code=400)
         #
         # 3. SUCCESS! Complete it and return it as a ****decoded**** url (which it is at this point)
         #
@@ -100,11 +76,6 @@ class ShortURL:
 
     @xaction.atomic
     def get_long(self, request):
-        self.shorturl = ''
-        self.shorturl_is_preencoded = False
-        self.normalized_shorturl = ''
-        self.normalized_shorturl_scheme = ''
-        self.hash = 0
         #
         # cleanse the passed short url
         #
@@ -138,23 +109,30 @@ class ShortURL:
         # Lookup the short url
         #
         self.hash = get_shorturlhash(self.normalized_shorturl)
+        s = None
         try:
-            s = ShortURLs.objects.get(hash=self.hash)
-            if not s:
-                raise self.event.log(request=request, messagekey='SHORT_URL_NOT_FOUND', value=self.shorturl, status_code=400)
+            if ShortURLs.objects.filter(hash=self.hash).exists():
+                s = ShortURLs.objects.get(hash=self.hash)
         except:
-            raise self.event.log(request=request, messagekey='SHORT_URL_NOT_FOUND', value=self.shorturl, status_code=400)
-
+            pass
+        if not s:
+            raise self.event.log(
+                    request=request,
+                    event_type='U',
+                    messagekey='SHORT_URL_NOT_FOUND',
+                    value=self.shorturl,
+                    status_code=404
+            )
         if s.shorturl != self.shorturl:
-            raise self.event.log(request=request, messagekey='SHORT_URL_MISMATCH', status_code=400)
+            raise self.event.log(request=request, event_type='E', messagekey='SHORT_URL_MISMATCH', status_code=400)
         #
         # If the short URL is not active, 404
         #
         if not s.is_active:
-            raise self.event.log(request=request, messagekey='HTTP_404', value=self.shorturl, status_code=404)
+            raise self.event.log(request=request, event_type='N', messagekey='HTTP_404', value=self.shorturl, status_code=404)
         #
         # Lookup the matching long url by the short url's id.
-        # If it doesn't exist, 404.
+        # If it doesn't exist, 422, something's wrong in the database, check the LongURL vs ShortURL table entries (should be 1-to-1).
         # If it does, decode it.
         #
         l = LongURLs.objects.get(id=s.longurl_id)
@@ -182,3 +160,5 @@ class ShortURL:
         # Return the longurl
         #
         return longurl
+
+

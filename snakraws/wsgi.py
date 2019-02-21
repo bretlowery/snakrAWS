@@ -14,7 +14,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 import datetime
 import sys
 import django
-from snakraws.loggr import SnakrLogger
+from snakraws.logging import SnakrLogger
 
 event = SnakrLogger()
 
