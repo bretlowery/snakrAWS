@@ -1,7 +1,6 @@
 '''
 ips.py defines the SnakrIP object which encapsulates IP and IP-based geolocation information for the origins of requests handled by Snakr.
 '''
-
 from django.conf import settings
 
 import os

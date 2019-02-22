@@ -2,6 +2,7 @@
 Parser contains methods to open the resource located at the long URL target and extract metadata such as document title
 for return in the JSON data with the short URL.
 '''
+
 from urllib.request import build_opener
 import mimetypes
 

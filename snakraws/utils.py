@@ -11,7 +11,6 @@ from urllib.parse import urlparse, quote, unquote
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
 
-
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
 # See http://www.isthe.com/chongo/tech/comp/fnv/index.html for math-y details.
 FNV_64_PRIME = 1099511628211

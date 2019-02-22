@@ -2,6 +2,7 @@
 ShortURLs.py contains the logic necessary to take a short URL and redirect to its long URL equivalent. It also contains the logic
 needed to construct a short URL when a long URL is submitted to Snakr.
 '''
+
 from urllib.parse import urlparse, urlunparse
 from django.db import transaction as xaction
 

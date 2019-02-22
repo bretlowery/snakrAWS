@@ -1,7 +1,7 @@
 """
 SnakrAWS URL Configuration
 """
-#from django.contrib import admin
+
 from django.http import HttpResponse
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt

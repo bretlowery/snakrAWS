@@ -1,6 +1,7 @@
 '''
 Centralized event logging for Snakr. Wraps the Django core logging system and adds JSON logging support.
 '''
+
 import logging
 import datetime
 

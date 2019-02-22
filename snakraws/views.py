@@ -1,6 +1,7 @@
 '''
 views.py contains the get and post handler logic.
 '''
+
 import json
 
 from django.template import RequestContext

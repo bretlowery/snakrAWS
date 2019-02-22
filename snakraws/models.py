@@ -1,6 +1,7 @@
 '''
 models.py contains the persistence logic for Snakr.
 '''
+
 from django.db import models
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext_lazy as _

@@ -1,7 +1,6 @@
 '''
 security.py contains rudimentary bot protection and blacklist control for SnakrAWS; will enhance in the future.
 '''
-
 from django.core.cache import cache
 from django.db.models.query_utils import Q
 
