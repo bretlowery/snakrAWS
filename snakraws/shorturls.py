@@ -7,7 +7,7 @@ from urllib.parse import urlparse, urlunparse
 from django.db import transaction as xaction
 
 from snakraws import settings
-from snakraws.logging import SnakrLogger
+from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.models import ShortURLs, LongURLs
 from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid

@@ -166,4 +166,3 @@ venv/lib/python3.7/site-packages/tests/test_level4/test_target_within.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_user_invalid.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_where.py
 /snakraws/local_settings.py
-!/snakraws/settings.py

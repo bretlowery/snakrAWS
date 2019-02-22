@@ -11,7 +11,7 @@ from django.db import transaction as xaction
 from snakraws import settings
 from snakraws.models import LongURLs, ShortURLs
 from snakraws.shorturls import ShortURL
-from snakraws.logging import SnakrLogger
+from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, get_longurlhash, get_host, get_referer, get_hash
 from snakraws.ips import SnakrIP
