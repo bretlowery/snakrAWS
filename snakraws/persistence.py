@@ -1,5 +1,5 @@
 '''
-Centralized event logging for Snakr. Wraps the Django core logging system and adds JSON logging support.
+Centralized persistence and logging for Snakr. Wraps the Django core logging system and adds JSON logging support.
 '''
 
 import logging
@@ -60,8 +60,6 @@ class SnakrLogger(Exception):
         dtnow = kwargs.pop('dt', dt.isoformat())
         ipobj = kwargs.pop('ipobj', None)
         #
-        #if status_code not in HTTP_STATUS_CODE[0]:
-        #    status_code = DEFAULT_HTTP_STATUS_CODE
         if event_type == 'I':
             status_code = 0
         if status_code == 200 or status_code == 0:
@@ -90,9 +88,6 @@ class SnakrLogger(Exception):
             else:
                 msg = value
 
-            #
-            # get client msg from the request obj
-            #
         dupe_message = False
         hostname = None
         useragent = None
@@ -131,7 +126,6 @@ class SnakrLogger(Exception):
             if status_code != 0:
                 jsondata['http_status'] = abs(status_code)
                 jsondata['event'] = EVENT_TYPE[event_type]
-
 
             if (settings.VERBOSE_LOGGING or verbose) and request:
                 jsondata['lu'] = str(longurl.id)
@@ -227,6 +221,7 @@ class SnakrLogger(Exception):
                     value = missing_value
                 m = _get_or_create_dimension(modelclass, key=value, name=value)
             return m
+
 
         ip = _get_or_create_dimension(DimIP, key=ipobj.ip.exploded, ip=ipobj.ip.exploded)
         #

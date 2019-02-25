@@ -10,7 +10,8 @@ from snakraws import settings
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.models import ShortURLs, LongURLs
-from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid
+from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid, is_shortpath_valid
+
 
 class ShortURL:
     """Validates and processes the short URL in the GET request."""
@@ -19,12 +20,21 @@ class ShortURL:
         self.event = SnakrLogger()
         bot_name, self.useragent = get_useragent_or_403_if_bot(request)
         if bot_name:
-            raise self.event.log(request=request, event_type='B', messagekey='ROBOT', value='Known Bot {%}' % bot_name, status_code=-403)
+            raise self.event.log(
+                    request=request,
+                    event_type='B',
+                    messagekey='ROBOT',
+                    value='Known Bot {%}' % bot_name,
+                    status_code=-403)
         try:
             self.host = get_host(request, False)
             self.referer = get_referer(request, False)
         except Exception as e:
-            raise self.event.log(messagekey='REQUEST_INVALID', status_code=400, request=None, message=str(e))
+            raise self.event.log(
+                    messagekey='REQUEST_INVALID',
+                    status_code=400,
+                    request=None,
+                    message=str(e))
 
         self.shorturl = None
         self.shorturl_is_preencoded = False
@@ -33,7 +43,6 @@ class ShortURL:
         self.hash = None
         self.id = -1
         return
-
 
     def make_short(self, normalized_longurl_scheme, vanity_path):
         #
@@ -56,16 +65,27 @@ class ShortURL:
         #
         vp = vanity_path.strip()
         if vp:
+            if not is_shortpath_valid(vp):
+                shorturl_candidate = shorturl_prefix + vp
+                raise self.event.log(
+                        messagekey='SHORT_PATH_INVALID',
+                        value=shorturl_candidate,
+                        status_code=400)
             shorturl_candidate = shorturl_prefix + vp
         else:
             shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
         if not is_url_valid(shorturl_candidate):
-            raise self.event.log(messagekey='SHORT_URL_INVALID', value=shorturl_candidate, status_code=400)
+            raise self.event.log(
+                    messagekey='SHORT_URL_INVALID',
+                    value=shorturl_candidate,
+                    status_code=400)
         shash = get_shorturlhash(shorturl_candidate)
         s = ShortURLs.objects.filter(hash=shash)
         sc = s.count()
         if sc != 0:
-            raise self.event.log(messagekey='VANITY_PATH_EXISTS', status_code=400)
+            raise self.event.log(
+                    messagekey='VANITY_PATH_EXISTS',
+                    status_code=400)
         #
         # 3. SUCCESS! Complete it and return it as a ****decoded**** url (which it is at this point)
         #
@@ -105,7 +125,10 @@ class ShortURL:
         # Was the shorturl encoded or malcoded? If so, don't trust it.
         #
         if self.shorturl != self.normalized_shorturl:
-            raise self.event.log(request=request, messagekey='SHORT_URL_ENCODING_MISMATCH', status_code=400)
+            raise self.event.log(
+                    request=request,
+                    messagekey='SHORT_URL_ENCODING_MISMATCH',
+                    status_code=400)
         #
         # Lookup the short url
         #
@@ -125,16 +148,23 @@ class ShortURL:
                     status_code=404
             )
         if s.shorturl != self.shorturl:
-            raise self.event.log(request=request, event_type='E', messagekey='SHORT_URL_MISMATCH', status_code=400)
+            raise self.event.log(
+                    request=request,
+                    event_type='E',
+                    messagekey='SHORT_URL_MISMATCH',
+                    status_code=400)
         #
         # If the short URL is not active, 404
         #
         if not s.is_active:
-            raise self.event.log(request=request, event_type='N', messagekey='HTTP_404', value=self.shorturl, status_code=404)
+            raise self.event.log(
+                    request=request,
+                    event_type='N',
+                    messagekey='HTTP_404',
+                    value=self.shorturl,
+                    status_code=404)
         #
-        # Lookup the matching long url by the short url's id.
-        # If it doesn't exist, 422, something's wrong in the database, check the LongURL vs ShortURL table entries (should be 1-to-1).
-        # If it does, decode it.
+        # Lookup the matching long url by the short url's id, and decode it.
         #
         l = LongURLs.objects.get(id=s.longurl_id)
         if not l:
@@ -143,7 +173,7 @@ class ShortURL:
                                  value='ERROR, HTTP 404 longurl not found',
                                  longurl=l,
                                  shorturl=s,
-                                 status_code=422)
+                                 status_code=404)
         longurl = get_decodedurl(l.longurl)
         #
         # Log that a 301 request to the matching long url is about to occur

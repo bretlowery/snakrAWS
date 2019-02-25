@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from snakraws.utils import get_hash
 
+
 class SnakrIP:
 
     @staticmethod

@@ -69,9 +69,6 @@ venv/lib/python3.7/site-packages/urllib3/
 venv/pip-selfcheck.json
 venv/pyvenv.cfg
 
-/snakraws/settings.py
-settings.py
-
 /start_memcache.sh
 /stop_memcache.sh
 /venv/

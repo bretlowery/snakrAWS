@@ -7,6 +7,10 @@ import random
 import json
 import mimetypes
 from urllib.parse import urlparse, quote, unquote
+from string import digits
+
+from profanity_check import predict as PredictProfanity
+from profanity_filter import ProfanityFilter
 
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
@@ -80,11 +84,41 @@ def get_shorturlhash(myurl):
 def get_shortpathcandidate(**kwargs):
     digits_only = kwargs.pop("digits_only", False)
     s = get_setting('SHORTURL_PATH_SIZE')
-    if digits_only:
-        import string
-        return ''.join(random.SystemRandom().choice(string.digits) for _ in range(s))
-    else:
-        return ''.join(random.SystemRandom().choice(settings.SHORTURL_PATH_ALPHABET) for _ in range(s))
+    while True:
+        if digits_only:
+            shortpath = ''.join(random.SystemRandom().choice(digits) for _ in range(s))
+        else:
+            shortpath = ''.join(random.SystemRandom().choice(settings.SHORTURL_PATH_ALPHABET) for _ in range(s))
+        if is_shortpath_valid(shortpath):
+            break
+    return shortpath
+
+
+def is_shortpath_valid(shortpath):
+    test = shortpath.lower().strip()
+    # is the path reserved?
+    reserved_paths = getattr(settings, "RESERVED_PATHS", "home")
+    if test in reserved_paths:
+        return False
+    #
+    # check for profanity method #1: linear SVM model score (fast)
+    # see https: // github.com / vzhou842 / profanity - check
+    #
+    if getattr(settings, "ENABLE_FAST_PROFANITY_CHECKING", True):
+        testlist = []
+        testlist.append(test)
+        score = PredictProfanity(testlist)[0]
+        if score == 1:
+            return False
+    #
+    # method 2: blacklist lookup (slower)
+    # https://pypi.org/project/profanity-filter/
+    #
+    if getattr(settings, "ENABLE_DEEP_PROFANITY_CHECKING", True):
+        pf = ProfanityFilter()
+        if pf.is_profane(test):
+            return False
+    return True
 
 
 def is_url_valid(myurl):
