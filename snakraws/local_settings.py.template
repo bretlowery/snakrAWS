@@ -15,18 +15,55 @@ def _(value):
     return value
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# YO: don't run with debug turned on in production!
 DEBUG = False
-APP_NAME = "SnakrAWS"
+APP_NAME = "snakraws"
 VERBOSE_NAME = "SnakrAWS"
+PAGE_TITLE = "Snakr All-Vegetable URL Shortening"
 SITE_MODE = 'dev'
 DATABASE_MODE = 'dev'
 SSL_ENABLED = False  #TBD
 
-# (Try to) prevent short URLs from, containing profanity
-# It's nowhere near perfect, but it's something
+# the root domain of your URL shortening service
+if SITE_MODE == 'dev':
+    SHORTURL_HOST = "localhost:8000"            # YOUR LOCAL WEBSERVER INSTANCE INFO HERE
+else:
+    SHORTURL_HOST = "bret.guru"                 # YOUR PROD WEBSERVER INSTANCE INFO HERE
+
+ALLOWED_HOSTS = [SHORTURL_HOST]
+
+# Location of the form used to shorten URLs is:
+SHORTENING_POSTBACK = "YOUR-DESIRED-FORM-URL-PATH-HERE-WITHOUT-SLASHES"
+# Make this public for those you want to be able to use the URL shortening service
+# Don't for those you don't
+# Don't include slashes in this value
+#
+# EXAMPLE: if you specify
+#    SHORTURL_HOST = "www.mysite.com"
+#  and
+#    SHORTENING_POSTBACK = "shorten"
+# THEN your page to shorten BOTH secure AND nonsecure URLs at will be
+#    http://www.mysite.com/shorten
+# and "shorten" will be disallowed as a vanity URL
+#
+
+# (Try to) prevent short URLs from containing profanity
+# It's nowhere near perfect and there's no guarantee, but at least it's something
+# FAST does a quick quality score check
+# DEEP does a deep blacklist check, BUT it adds 3-10x to the time needed to create a short URL
+# Note this is ONLY done once at short URL generation, NOT at actual subsequent short URL lookup and redirection time
+#
 ENABLE_FAST_PROFANITY_CHECKING = True
 ENABLE_DEEP_PROFANITY_CHECKING = True
+#
+# If enabled, the following setting prevents the user from creating a short URL for any target (long) URL
+# that contains profane language. This requires that the target page be loaded and parsed by Snakr,
+# which may not be possible. Also note that this check is ONLY done once at short URL generation, NOT at actual
+# subsequent short URL lookup and redirection time, so if the target changes and profanity is added, we won't catch it.
+# This adds an additional up-to-30 seconds to the time needed to create a short URL, but times out after 30 seconds max.
+# The same Fast and/or Deep checks will be made as the short URL, depending on the settings above.
+#
+ENABLE_LONG_URL_PROFANITY_CHECKING = False
 
 # Postgres DB
 if DATABASE_MODE == 'dev':
@@ -78,13 +115,6 @@ STATIC_URL = '/static/'
 # geolocation lookups
 GEOLOCATION_API_URL = "http://api.ipstack.com/%ip%?access_key=YOUR-IPSTACK-API-KEY-HERE"
 
-if SITE_MODE == 'dev':
-    SHORTURL_HOST = "localhost:8000"            # YOUR LOCAL WEBSERVER INSTANCE INFO HERE
-    SECURE_SHORTURL_HOST = "localhost:8000"
-else:
-    SHORTURL_HOST = "bret.guru"                 # YOUR PROD WEBSERVER INSTANCE INFO HERE
-    SECURE_SHORTURL_HOST = "bret.guru"
-
 # Number of alphabetic characters in the short URL path (min 6, max 12)
 SHORTURL_PATH_SIZE = 6
 
@@ -130,18 +160,24 @@ CANONICAL_MESSAGES = {
         'HTTP_404'                      : _('ERROR, URL {%s} not found (404)'),
         'LONG_URL_SUBMITTED'            : _('200 Long URL {%s} submitted'),
         'VANITY_PATH_EXISTS'            : _('ERROR, the proposed vanity path for the new short URL is already in use.'),
+        'VANITY_PATH_INVALID'           : _("'%s' is an invalid vanity URL. "
+                                            "If provided, a vanity URL must be at least %d characters long and contain one or more "
+                                            "letters, digits, hyphens, and/or underscores. No other characters are allowed; "
+                                            "do not add slashes."),
         'SHORT_URL_ENCODING_MISMATCH'   : _('ERROR, the short URL sent to this service is encoded differently from the original short URL '
                                             'provided and may pose a security risk. DO NOT USE the altered version.'),
         'SHORT_URL_INVALID'             : _('ERROR, the constructed short URL {%s} is not a valid URL. '
                                             'If you supplied a custom short URL fragment, it may contain invalid characters.'),
-        'SHORT_PATH_INVALID'            : _('ERROR, the constructed short URL {%s} uses a reserved path or language flagged as inappropriate. '
+        'SHORT_PATH_INVALID'            : _('ERROR, the constructed short URL {%s} uses a reserved path%pl. '
                                             'If you supplied a custom short URL fragment, please use a different one.'),
         'SHORT_URL_NOT_FOUND'           : _('ERROR, URL {%s} is not recognized by this service.'),
         'SHORT_URL_MISMATCH'            : _('ERROR, the short URL sent to this service is different from the original short URL '
                                             'provided and may pose a security risk. DO NOT USE the altered version.'),
         'LONG_URL_MISSING'              : _('ERROR, no long URL was submitted to the service.'),
-        'LONG_URL_INVALID'              : _('ERROR, the URL {%s} submitted for shortening is invalid.'),
-        'LONG_URL_RESUBMITTED'          : _('200 Long URL {%s} resubmitted'),
+        'LONG_URL_INVALID'              : _('ERROR, the URL {%s} submitted for shortening is invalid%pl.'),
+        'LONG_URL_CONTENT_MISSING'      : _('ERROR, the content at the URL {%s} submitted for shortening does not exist or is not accessible by this service.'),
+        'LONG_URL_CONTENT_INVALID'      : _('ERROR, the content at the URL {%s} submitted for shortening is invalid%pl.'),
+        'LONG_URL_RESUBMITTED'          : _('200 Long URL {%s} resubmitted. Please reuse the existing short URL for this long URL.'),
         'MALFORMED_REQUEST'             : _('ERROR, I don''t understand this request.'),
         'STARTUP'                       : _('Snakr starting'),
         'PYTHON_VERSION'                : _('Python version %s'),
@@ -151,11 +187,12 @@ CANONICAL_MESSAGES = {
         'READY'                         : _('Snakr is ready and listening'),
         'SHUTDOWN'                      : _('Snakr stopping'),
         'HASH_COLLISION'                : _('WARNING, hash collision detected on URL {%s}.'),
+        'LANGUAGE_ADDENDUM'             : _(" or contains language flagged as inappropriate"),
     }
 
 MESSAGE_OF_LAST_RESORT = 'ERROR, an unknown exception occurred'
 
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+USER_AGENT = "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) (if u can read this, someone resolved a URL to you using me)"
 
 BADBOTLIST = ['1job', 'abot', 'agentname', 'apachebench', 'aport', 'applesyndication', 'ask jeeves', 'ask+jeeves',
         'atomz', 'avantgo', 'baiduspider', 'blitzbot', 'bloglines', 'bordermanager', 'changedetection',
@@ -213,4 +250,5 @@ RESERVED_PATHS = [
     _('theme'),
     _('robot'),
     _('image'),
+    SHORTENING_POSTBACK
     ]

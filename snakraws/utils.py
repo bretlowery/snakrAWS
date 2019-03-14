@@ -1,13 +1,18 @@
 '''
 utils.py contains helper functions used throughout the codebase.
 '''
-from django.conf import settings
 
+import re
 import random
 import json
 import mimetypes
+from urllib.request import Request, urlopen
 from urllib.parse import urlparse, quote, unquote
 from string import digits
+
+from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 
 from profanity_check import predict as PredictProfanity
 from profanity_filter import ProfanityFilter
@@ -22,6 +27,156 @@ FNV1_64A_INIT = 14695981039346656037
 BIGGEST_64_INT = 9223372036854775807
 SMALLEST_64_INT = -9223372036854775808
 
+BAD_THREE_LETTER_WORDS = [
+    "ass",
+    "fuc",
+    "fuk",
+    "fuq",
+    "fux",
+    "fck",
+    "coc",
+    "cok",
+    "coq",
+    "kox",
+    "koc",
+    "kok",
+    "koq",    
+    "cac",
+    "cak",
+    "caq",
+    "kac",
+    "kak",
+    "kaq",    
+    "dic",
+    "dik",
+    "diq",
+    "dix",
+    "dck",
+    "pns",
+    "psy",
+    "fag",
+    "fgt",
+    "ngr",
+    "nig",
+    "cnt",
+    "knt",
+    "sht",
+    "dsh",
+    "twt",
+    "bch",
+    "cum",
+    "clt",
+    "kum",
+    "klt",
+    "suc",
+    "suk",
+    "suq",
+    "sck",
+    "lic",
+    "lik",
+    "liq",
+    "lck",
+    "jiz",
+    "jzz",
+    "gay",
+    "gey",
+    "gei",
+    "gai",
+    "vag",
+    "vgn",
+    "sjv",
+    "fap",
+    "prn",
+    "lol",
+    "jew",
+    "joo",
+    "gvr",
+    "pus",
+    "pis",
+    "pss",
+    "snm",
+    "tit",
+    "fku",
+    "fcu",
+    "fqu",
+    "hor",
+    "slt",
+    "jap",
+    "wop",
+    "kik",
+    "kyk",
+    "kyc",
+    "kyq",
+    "dyk",
+    "dyq",
+    "dyc",
+    "kkk",
+    "jyz",
+    "prk",
+    "prc",
+    "prq",
+    "mic",
+    "mik",
+    "miq",
+    "myc",
+    "myk",
+    "myq",
+    "guc",
+    "guk",
+    "guq",
+    "giz",
+    "gzz",
+    "sex",
+    "sxx",
+    "sxi",
+    "sxe",
+    "sxy",
+    "xxx",
+    "wac",
+    "wak",
+    "waq",
+    "wck",
+    "pot",
+    "thc",
+    "vaj",
+    "vjn",
+    "nut",
+    "std",
+    "lsd",
+    "poo",
+    "azn",
+    "pcp",
+    "dmn",
+    "orl",
+    "anl",
+    "ans",
+    "muf",
+    "mff",
+    "phk",
+    "phc",
+    "phq",
+    "xtc",
+    "tok",
+    "toc",
+    "toq",
+    "mlf",
+    "rac",
+    "rak",
+    "raq",
+    "rck",
+    "sac",
+    "sak",
+    "saq",    
+    "pms",
+    "nad",
+    "ndz",
+    "nds",
+    "wtf",
+    "sol",
+    "sob",
+    "fob",
+    "sfu",
+]
 
 def get_hash(string):
     """
@@ -94,30 +249,30 @@ def get_shortpathcandidate(**kwargs):
     return shortpath
 
 
+def site_exists(url):
+    rep = None
+    ua = getattr(settings, "USER_AGENT",
+                 "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) "
+                 "(if u can read this, someone resolved a URL to you using me)")
+    req = Request(url)
+    req.add_header("User-Agent", ua)
+    try:
+        rep = urlopen(req)
+    except:
+        pass
+    if rep:
+        if rep.getcode() == 200:
+            return True
+    return False
+
+
 def is_shortpath_valid(shortpath):
     test = shortpath.lower().strip()
-    # is the path reserved?
     reserved_paths = getattr(settings, "RESERVED_PATHS", "home")
     if test in reserved_paths:
         return False
-    #
-    # check for profanity method #1: linear SVM model score (fast)
-    # see https: // github.com / vzhou842 / profanity - check
-    #
-    if getattr(settings, "ENABLE_FAST_PROFANITY_CHECKING", True):
-        testlist = []
-        testlist.append(test)
-        score = PredictProfanity(testlist)[0]
-        if score == 1:
-            return False
-    #
-    # method 2: blacklist lookup (slower)
-    # https://pypi.org/project/profanity-filter/
-    #
-    if getattr(settings, "ENABLE_DEEP_PROFANITY_CHECKING", True):
-        pf = ProfanityFilter()
-        if pf.is_profane(test):
-            return False
+    if is_profane(test):
+        return False
     return True
 
 
@@ -136,8 +291,8 @@ def is_url_valid(myurl):
     return is_valid
 
 
-def initurlparts():
-    return urlparse('http://www.dummyurl.com')  # this is a django 1.5.11 bug workaround
+def urlparts(url="http://www.dummyurl.com"):
+    return urlparse(url)
 
 
 def get_json(request, key):
@@ -192,10 +347,80 @@ def get_meta(request, normalize=True):
     return get_host(request, normalize), get_useragent(request, normalize), get_referer(request, normalize)
 
 
+def get_shortening_postback():
+    return r'^%s$' % getattr(settings, 'SHORTENING_POSTBACK', 'shorten/')
 
 
+def get_admin_postback():
+    return r'^%s' % getattr(settings, 'ADMIN_POSTBACK', 'admin/')
 
 
+def get_message(key):
+    key = key.strip().upper()
+    molr = getattr(settings, "MESSAGE_OF_LAST_RESORT", _("SEVERE ERROR: EXPECTED MESSAGE NOT FOUND!"))
+    messages = getattr(settings, "CANONICAL_MESSAGES", "{'%s': '%s'}" % (key, molr))
+    if key in messages:
+        message = messages[key]
+        if '%pl' in message:
+            if getattr(settings, "ENABLE_LONG_URL_PROFANITY_CHECKING", False) or getattr(settings, "ENABLE_SHORT_URL_PROFANITY_CHECKING", False):
+                message = message.replace("%pl", getattr(settings, "LANGUAGE_ADDENDUM", _(" or contains language flagged as inappropriate")))
+            else:
+                message = message.replace("%pl", "")
+    else:
+        message = molr
+    return message
+
+
+def get_all_substrings(input_string, min_length=1):
+    length = len(input_string)
+    if len(input_string) > min_length:
+        return [input_string[i:j + 1] for i in range(length) for j in range(i+(min_length - 1), length)]
+    else:
+        return ""
+
+
+def is_profane(url):
+
+    if len(url) < 3:
+        return False
+
+    if getattr(settings, "ENABLE_FAST_PROFANITY_CHECKING", True):
+        parts = urlparse(get_decodedurl(url))
+        partslist = []
+        if not (parts.path or parts.netloc):
+            raise InvalidURLError("Badly formatted URL passed to is_url_profane")
+        splitters = r"\.|\/|\_|\-|\~|\$|\+|\!|\*|\(|\)|\,"   # all the URL-safe characters, escaped
+        if parts.netloc:
+            partslist = partslist + re.split(splitters, parts.netloc)
+        if parts.path:
+            partslist = partslist + re.split(splitters, parts.path)
+        if parts.query:
+            partslist = partslist + re.split(splitters, parts.query)
+
+        # speed optimization
+        stringlist = []
+        for item in partslist:
+            if len(item) > 0:
+                for substring in get_all_substrings(item, 2):
+                    if len(substring) > 0:
+                        stringlist.append(substring)
+        partslist = list(dict.fromkeys(stringlist))  # removes dupes
+
+        for part in partslist:
+            if part in BAD_THREE_LETTER_WORDS:
+                return True
+
+        score = PredictProfanity(partslist)
+        if score.any() == 1:
+            return True
+
+        if getattr(settings, "ENABLE_DEEP_PROFANITY_CHECKING", True):
+            pf = ProfanityFilter()
+            for part in partslist:
+                if pf.is_profane(part):
+                    return True
+
+    return False
 
 
 

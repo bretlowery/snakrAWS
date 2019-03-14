@@ -15,7 +15,7 @@ from snakraws import settings
 from snakraws.models import EVENT_TYPE, DEFAULT_EVENT_TYPE, DEFAULT_HTTP_STATUS_CODE, \
     DimContinent, DimReferer, DimRegion, DimPostalCode, DimIP, DimHost, DimDevice, DimCountry, DimUserAgent, DimCity, FactEvent, \
     LongURLs, ShortURLs
-from snakraws.utils import get_meta, get_hash
+from snakraws.utils import get_meta, get_hash, get_message
 from snakraws.ips import SnakrIP
 from snakraws.security import is_blacklisted
 
@@ -59,25 +59,15 @@ class SnakrLogger(Exception):
         dt = datetime.datetime.now()
         dtnow = kwargs.pop('dt', dt.isoformat())
         ipobj = kwargs.pop('ipobj', None)
-        #
+
         if event_type == 'I':
             status_code = 0
         if status_code == 200 or status_code == 0:
             event_type = 'I'
         if settings.VERBOSE_LOGGING or (status_code >= 400 and status_code != 404):
             verbose = True
-        if not msg:
-            if msgkey:
-                msgkey = msgkey.strip().upper()
-                try:
-                    msg = settings.CANONICAL_MESSAGES[msgkey]
-                    if not msg:
-                        msg = settings.MESSAGE_OF_LAST_RESORT
-                except:
-                    msg = settings.MESSAGE_OF_LAST_RESORT
-                    pass
-            else:
-                msg = settings.MESSAGE_OF_LAST_RESORT
+        if msgkey and not msg:
+            msg = get_message(msgkey)
         if value is not None and value != 'None':
             if msg:
                 try:

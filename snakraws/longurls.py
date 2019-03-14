@@ -2,7 +2,9 @@
 LongURLs.py contains the logic necessary to consume a long URL and return a short URL for it.
 '''
 
+from urllib.request import urlopen
 from urllib.parse import urlparse
+from urllib.error import URLError
 # from filetransfers.api import serve_file
 
 from django.http import Http404
@@ -13,7 +15,8 @@ from snakraws.models import LongURLs, ShortURLs
 from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
-from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, get_longurlhash, get_host, get_referer, get_hash
+from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
+    get_longurlhash, get_host, get_referer, is_profane
 from snakraws.ips import SnakrIP
 
 
@@ -21,6 +24,9 @@ class LongURL:
     """Validates and processes the long URL in the POST request."""
 
     def __init__(self, request, *args, **kwargs):
+
+        lu = kwargs.pop('lu', None)
+        vp = kwargs.pop('vp', None)
 
         self.event = SnakrLogger()
 
@@ -39,16 +45,16 @@ class LongURL:
         if self.ip.is_error:
             raise self.event.log(messagekey='IP_LOOKUP_INVALID', status_code=400, request=None, message=self.ip.errors)
 
-        lurl = get_json(request, 'u')
+        lurl = get_json(request, 'u') or lu
         if not lurl:
             raise self.event.log(messagekey='LONG_URL_MISSING', status_code=400)
 
         if not is_url_valid(lurl):
             raise self.event.log(messagekey='LONG_URL_INVALID', value=lurl, status_code=400)
 
-        self.vanity_path = get_json(request, 'vp')
+        self.vanity_path = get_json(request, 'v') or vp
 
-        image_url = get_json(request, 'img')
+        image_url = get_json(request, 'i')
         if is_image(image_url):
             self.linked_image = image_url
         else:
@@ -83,7 +89,46 @@ class LongURL:
             #
             # NO IT DOESN'T
             #
-            # 1. Create a LongURLs persistence object
+            # 1. Does the website even exist? If not, error
+            #
+            # if not site_exists(self.normalized_longurl):
+            #     raise self.event.log(
+            #             request=request,
+            #             ipobj=self.ip,
+            #             event_type='E',
+            #             messagekey='LONG_URL_CONTENT_MISSING',
+            #             value=self.normalized_longurl,
+            #             status_code=400)
+            #
+            # 2. IF ENABLE_LONG_URL_PROFANITY_CHECKING = True, check the target for profanity w/30-sec timeout
+            #
+            if getattr(settings, "ENABLE_LONG_URL_PROFANITY_CHECKING", False):
+                if is_profane(self.normalized_longurl):
+                    raise self.event.log(
+                            request=request,
+                            ipobj=self.ip,
+                            event_type='E',
+                            messagekey='LONG_URL_INVALID',
+                            value=self.normalized_longurl,
+                            status_code=400)
+                # long_url_contents = None
+                # try:
+                #     f = urlopen(self.normalized_longurl, timeout=30)
+                #     if f:
+                #         long_url_contents = f.read()
+                # except URLError as e:
+                #     pass
+                # if long_url_contents:
+                #     if is_profane(long_url_contents):
+                #         raise self.event.log(
+                #                 request=request,
+                #                 ipobj=self.ip,
+                #                 event_type='E',
+                #                 messagekey='LONG_URL_CONTENT_INVALID',
+                #                 value=self.normalized_longurl,
+                #                 status_code=400)
+            #
+            # 3. Create a LongURLs persistence object
             #
             if self.longurl_is_preencoded:
                 originally_encoded = True
@@ -96,13 +141,13 @@ class LongURL:
                           )
             dl.save()
             #
-            # 2. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
+            # 4. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
             #
             s = ShortURL(request)
             s.make_short(self.normalized_longurl_scheme, self.vanity_path)
             compression_ratio = float(len(s.shorturl)) / float(len(self.normalized_longurl))
             #
-            # 3. Create a matching ShortURLs persistence object
+            # 5. Create a matching ShortURLs persistence object
             #
             ds = ShortURLs(hash=s.hash,
                            longurl_id=dl.id,
@@ -112,15 +157,15 @@ class LongURL:
                            is_active=True
                            )
             #
-            # 4. Is there an associated image? If so, download it to static,
+            # 6. Is there an associated image? If so, download it to static,
             #
             # if self.linked_image:
             #    ft = file
             #
-            # 5. Persist everything
+            # 7. Persist everything
             #
             ds.save()
-            self.event.log(request=request,
+            msg = self.event.log(request=request,
                            ipobj=self.ip,
                            event_type='L',
                            messagekey='LONG_URL_SUBMITTED',
@@ -130,7 +175,7 @@ class LongURL:
                            status_code=200
                            )
             #
-            # 6. Return the short url
+            # 8. Return the short url
             #
         else:
             #
@@ -156,7 +201,7 @@ class LongURL:
             #
             # 3. Log the lookup
             #
-            self.event.log(
+            msg = self.event.log(
                     request=request,
                     ipobj=self.ip,
                     event_type='R',
@@ -168,5 +213,5 @@ class LongURL:
             #
             # 4. Return the short url
             #
-        return s.shorturl
+        return s.shorturl, msg
 

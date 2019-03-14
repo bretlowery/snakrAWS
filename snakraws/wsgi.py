@@ -15,9 +15,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 import datetime
 import sys
 import django
+
+import spacy
+
 from snakraws.persistence import SnakrLogger
 
 event = SnakrLogger()
+spacy.load('en')
 
 dt = datetime.datetime.now()
 event.log(messagekey='STARTUP', dt=dt.isoformat(), status_code=0)

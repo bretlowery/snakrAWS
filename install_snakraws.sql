@@ -260,13 +260,14 @@ CREATE INDEX IX_snakraws_factevents_useragent
 ON snakraws_factevents
   (useragent_id);
 
+
 ALTER TABLE snakraws_factevents ADD CONSTRAINT fk_snakraws_factevents_longurl_id
 FOREIGN KEY (longurl_id)
-REFERENCES snakraws_longurls (id) ON DELETE NO ACTION;
+REFERENCES snakraws_longurls (id) ON DELETE CASCADE;
 
 ALTER TABLE snakraws_factevents ADD CONSTRAINT fk_snakraws_factevents_shorturl_id
 FOREIGN KEY (shorturl_id)
-REFERENCES snakraws_shorturls (id) ON DELETE NO ACTION;
+REFERENCES snakraws_shorturls (id) ON DELETE CASCADE;
 
 ALTER TABLE snakraws_factevents ADD CONSTRAINT fk_snakraws_factevents_city_id
 FOREIGN KEY (city_id)

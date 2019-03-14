@@ -5,7 +5,6 @@ db.sqlite3
 manage.py
 snakraws/__pycache__/
 snakraws/migrations/
-templates/
 venv/bin/__pycache__/
 venv/bin/activate
 venv/bin/activate.csh
@@ -163,3 +162,5 @@ venv/lib/python3.7/site-packages/tests/test_level4/test_target_within.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_user_invalid.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_where.py
 /snakraws/local_settings.py
+!/snakraws/templates/base.html
+!/snakraws/templates/shorten_url.html

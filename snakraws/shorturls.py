@@ -63,15 +63,18 @@ class ShortURL:
         #    b. If no vanity path was passed, build a path with SHORTURL_PATH_SIZE characters from SHORTURL_PATH_ALPHABET.
         #    c. Does it exist already? If so, regenerate it and try again.
         #
-        vp = vanity_path.strip()
-        if vp:
-            if not is_shortpath_valid(vp):
+        if vanity_path:
+            vp = vanity_path.strip()
+            if vp:
+                if not is_shortpath_valid(vp):
+                    shorturl_candidate = shorturl_prefix + vp
+                    raise self.event.log(
+                            messagekey='SHORT_PATH_INVALID',
+                            value=shorturl_candidate,
+                            status_code=400)
                 shorturl_candidate = shorturl_prefix + vp
-                raise self.event.log(
-                        messagekey='SHORT_PATH_INVALID',
-                        value=shorturl_candidate,
-                        status_code=400)
-            shorturl_candidate = shorturl_prefix + vp
+            else:
+                shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
         else:
             shorturl_candidate = shorturl_prefix + get_shortpathcandidate()
         if not is_url_valid(shorturl_candidate):
@@ -178,7 +181,7 @@ class ShortURL:
         #
         # Log that a 301 request to the matching long url is about to occur
         #
-        self.event.log(
+        msg = self.event.log(
                 request=request,
                 event_type='S',
                 messagekey='HTTP_301',
@@ -190,6 +193,6 @@ class ShortURL:
         #
         # Return the longurl
         #
-        return longurl
+        return longurl, msg
 
 
