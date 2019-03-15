@@ -29,34 +29,18 @@ def get_useragent_or_403_if_bot(request):
 
 
 def is_blacklisted(
-        dimcity=None,
-        dimcontinent=None,
-        dimcountry=None,
+        dimgeolocation=None,
         dimdevice=None,
         dimip=None,
         dimhost=None,
-        dimpostalcode=None,
         dimreferer=None,
-        dimregion=None,
         dimuseragent=None):
     blquery = Q(is_active=True)
     try:
-        if dimcity:
-            blquery = blquery & (Q(city_id=dimcity.id) | Q(city_id=0))
+        if dimgeolocation:
+            blquery = blquery & (Q(geo_id=dimgeolocation.id) | Q(geo_id=0))
     except:
-        blquery = blquery & Q(city_id=0)
-        pass
-    try:
-        if dimcontinent:
-            blquery = blquery & (Q(continent_id=dimcontinent.id) | Q(continent_id=0))
-    except:
-        blquery = blquery & Q(continent_id=0)
-        pass
-    try:
-        if dimcountry:
-            blquery = blquery & (Q(country_id=dimcountry.id) | Q(country_id=0))
-    except:
-        blquery = blquery & Q(country_id=0)
+        blquery = blquery & Q(geo_id=0)
         pass
     try:
         if dimdevice:
@@ -77,22 +61,10 @@ def is_blacklisted(
         blquery = blquery & Q(ip_id=0)
         pass
     try:
-        if dimpostalcode:
-            blquery = blquery & (Q(postalcode_id=dimpostalcode.id) | Q(postalcode_id=0))
-    except:
-        blquery = blquery & Q(postalcode_id=0)
-        pass
-    try:
         if dimreferer:
             blquery = blquery & (Q(referer_id=dimreferer.id) | Q(referer_id=0))
     except:
         blquery = blquery & Q(referer_id=0)
-        pass
-    try:
-        if dimregion:
-            blquery = blquery & (Q(region_id=dimregion.id) | Q(region_id=0))
-    except:
-        blquery = blquery & Q(region_id=0)
         pass
     try:
         if dimuseragent:

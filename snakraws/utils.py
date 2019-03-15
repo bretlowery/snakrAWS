@@ -348,11 +348,19 @@ def get_meta(request, normalize=True):
 
 
 def get_shortening_postback():
-    return r'^%s$' % getattr(settings, 'SHORTENING_POSTBACK', 'shorten/')
+    return '^%s/?$' % getattr(settings, 'SHORTENING_POSTBACK', 'shorten')
 
 
 def get_admin_postback():
-    return r'^%s' % getattr(settings, 'ADMIN_POSTBACK', 'admin/')
+    return '^%s/?' % getattr(settings, 'ADMIN_POSTBACK', 'admin')
+
+
+def get_jet_postback():
+    return '^%s/?' % getattr(settings, 'JET_POSTBACK', 'jet')
+
+
+def get_jet_dashboard_postback():
+    return '^%s/?' % getattr(settings, 'JET_DASHBOARD_POSTBACK', '/jet/dashboard')
 
 
 def get_message(key):

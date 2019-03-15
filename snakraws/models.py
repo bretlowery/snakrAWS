@@ -50,87 +50,81 @@ UNSPECIFIED_URL_ID = get_hash('unspecified')
 _USE_EXISTS = getattr(settings, 'USE_IF_DIM_EXISTS', False)
 
 
-class DimCity(models.Model):
-    id = models.AutoField(primary_key=True)
+class DimGeoLocation(models.Model):
+    id = models.AutoField(
+            primary_key=True
+    )
     hash = models.BigIntegerField(
             unique=True,
-            null=False)
-    name = models.CharField(
-            unique=True,
-            max_length=100,
-            null=False)
+            null=False
+    )
     is_mutable = models.BooleanField(
             default=True,
-            null=False)
-
-    class Meta:
-        app_label = TABLE_PREFIX
-        managed = False
-        db_table = '%s_dimcities' % TABLE_PREFIX
-
-    def __str__(self):
-        return self.city
-
-    def __unicode__(self):
-        return self.city
-
-
-class DimContinent(models.Model):
-    id = models.AutoField(primary_key=True)
-    hash = models.BigIntegerField(
+            null=False
+    )
+    providername = models.CharField(
+            max_length=50,
+            null=False
+    )
+    postalcode = models.CharField(
             unique=True,
-            null=False)
-    name = models.CharField(
-            unique=True,
+            max_length=32,
+            null=False
+    )
+    lat = models.DecimalField(
+            max_digits=7,
+            decimal_places=4,
+            null=True
+    )
+    lng = models.DecimalField(
+            max_digits=7,
+            decimal_places=4,
+            null=True
+    )
+    city = models.CharField(
             max_length=100,
-            null=False)
-    code = models.CharField(
-            unique=True,
+            null=True
+    )
+    regionname = models.CharField(
+            max_length=100,
+            null=True
+    )
+    regioncode = models.CharField(
             max_length=2,
-            null=False)
-    is_mutable = models.BooleanField(
-            default=True,
-            null=False)
-
-    class Meta:
-        app_label = TABLE_PREFIX
-        managed = False
-        db_table = '%s_dimcountries' % TABLE_PREFIX
-
-    def __str__(self):
-        return self.country
-
-    def __unicode__(self):
-        return self.country
-
-
-class DimCountry(models.Model):
-    id = models.AutoField(primary_key=True)
-    hash = models.BigIntegerField(
-            unique=True,
-            null=False)
-    name = models.CharField(
-            unique=True,
+            null=True
+    )
+    countryname = models.CharField(
             max_length=100,
-            null=False)
-    code = models.CharField(
-            unique=True,
+            null=True
+    )
+    countrycode = models.CharField(
             max_length=2,
-            null=False)
-    is_mutable = models.BooleanField(
-            default=True,
-            null=False)
+            null=True
+    )
+    countyname = models.CharField(
+            max_length=100,
+            null=True
+    )
+    countyweight = models.DecimalField(
+            max_digits=5,
+            decimal_places=2,
+            null=True
+    )
+    allcountyweights = models.CharField(
+            max_length=100,
+            null=True
+    )
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
-        db_table = '%s_dimcountries' % TABLE_PREFIX
+        managed = True
+        db_table = '%s_dimgeolocations' % TABLE_PREFIX
 
     def __str__(self):
-        return self.country
+        return '[ %d, "%s", "%s", "%s", "%s" ]' % (self.hash, self.postalcode, self.city, self.regionname, self.countryname)
 
     def __unicode__(self):
-        return self.country
+        return u'[ %d, "%s", "%s", "%s", "%s" ]' % (self.hash, self.postalcode, self.city, self.regionname, self.countryname)
 
 
 class DimDevice(models.Model):
@@ -148,7 +142,7 @@ class DimDevice(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_dimdevices' % TABLE_PREFIX
 
     def __str__(self):
@@ -173,7 +167,7 @@ class DimHost(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_dimhosts' % TABLE_PREFIX
 
     def __str__(self):
@@ -198,7 +192,7 @@ class DimIP(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_dimips' % TABLE_PREFIX
 
     def __str__(self):
@@ -242,31 +236,6 @@ class DimIP(models.Model):
             return self.ipv4.ip.exploded
 
 
-class DimPostalCode(models.Model):
-    id = models.AutoField(primary_key=True)
-    hash = models.BigIntegerField(
-            unique=True,
-            null=False)
-    postalcode = models.CharField(
-            unique=True,
-            max_length=32,
-            null=False)
-    is_mutable = models.BooleanField(
-            default=True,
-            null=False)
-
-    class Meta:
-        app_label = TABLE_PREFIX
-        managed = False
-        db_table = '%s_dimpostalcodes' % TABLE_PREFIX
-
-    def __str__(self):
-        return self.postalcode
-
-    def __unicode__(self):
-        return self.postalcode
-
-
 class DimReferer(models.Model):
     id = models.AutoField(primary_key=True)
     hash = models.BigIntegerField(
@@ -281,7 +250,7 @@ class DimReferer(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_dimreferers' % TABLE_PREFIX
 
     def __str__(self):
@@ -289,35 +258,6 @@ class DimReferer(models.Model):
 
     def __unicode__(self):
         return self.referer
-
-
-class DimRegion(models.Model):
-    id = models.AutoField(primary_key=True)
-    hash = models.BigIntegerField(
-            unique=True,
-            null=False)
-    name = models.CharField(
-            unique=True,
-            max_length=100,
-            null=False)
-    code = models.CharField(
-            unique=True,
-            max_length=2,
-            null=False)
-    is_mutable = models.BooleanField(
-            default=True,
-            null=False)
-
-    class Meta:
-        app_label = TABLE_PREFIX
-        managed = False
-        db_table = '%s_dimregions' % TABLE_PREFIX
-
-    def __str__(self):
-        return self.region
-
-    def __unicode__(self):
-        return self.region
 
 
 class DimUserAgent(models.Model):
@@ -334,7 +274,7 @@ class DimUserAgent(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_dimuseragents' % TABLE_PREFIX
 
     def __str__(self):
@@ -361,7 +301,7 @@ class LongURLs(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_longurls' % TABLE_PREFIX
 
     def __str__(self):
@@ -399,7 +339,7 @@ class ShortURLs(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_shorturls' % TABLE_PREFIX
 
     def __str__(self):
@@ -439,21 +379,9 @@ class FactEvent(models.Model):
             to_field="id",
             null=False,
             on_delete=models.DO_NOTHING)
-    city = models.ForeignKey(
-            'DimCity',
-            db_column="city_id",
-            to_field="id",
-            null=False,
-            on_delete=models.DO_NOTHING)
-    continent = models.ForeignKey(
-            'DimContinent',
-            db_column="continent_id",
-            to_field="id",
-            null=False,
-            on_delete=models.DO_NOTHING)
-    country = models.ForeignKey(
-            'DimCountry',
-            db_column="country_id",
+    geo = models.ForeignKey(
+            'DimGeoLocation',
+            db_column="geo_id",
             to_field="id",
             null=False,
             on_delete=models.DO_NOTHING)
@@ -475,21 +403,9 @@ class FactEvent(models.Model):
             to_field="id",
             null=False,
             on_delete=models.DO_NOTHING)
-    postalcode = models.ForeignKey(
-            'DimPostalCode',
-            db_column="postalcode_id",
-            to_field="id",
-            null=False,
-            on_delete=models.DO_NOTHING)
     referer = models.ForeignKey(
             'DimReferer',
             db_column="referer_id",
-            to_field="id",
-            null=False,
-            on_delete=models.DO_NOTHING)
-    region = models.ForeignKey(
-            'DimRegion',
-            db_column="region_id",
             to_field="id",
             null=False,
             on_delete=models.DO_NOTHING)
@@ -502,7 +418,7 @@ class FactEvent(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_factevents' % TABLE_PREFIX
 
     def __str__(self):
@@ -520,23 +436,12 @@ class Blacklist(models.Model):
     is_active = models.BooleanField(
             null=False
     )
-    city = models.ForeignKey(
-            'DimCity',
-            db_column="city_id",
+    geo = models.ForeignKey(
+            'DimGeoLocation',
+            db_column="geo_id",
             to_field="id",
-            null=True,
-            on_delete=models.CASCADE)
-    continent = models.ForeignKey(
-            'DimContinent',
-            db_column="continent_id",
-            to_field="id",
-            null=True,
-            on_delete=models.CASCADE)
-    country = models.ForeignKey(
-            'DimCountry',
-            db_column="country_id",
-            null=True,
-            on_delete=models.CASCADE)
+            null=False,
+            on_delete=models.DO_NOTHING)
     device = models.ForeignKey(
             'DimDevice',
             db_column="device_id",
@@ -555,21 +460,9 @@ class Blacklist(models.Model):
             to_field="id",
             null=True,
             on_delete=models.CASCADE)
-    postalcode = models.ForeignKey(
-            'DimPostalCode',
-            db_column="postalcode_id",
-            to_field="id",
-            null=True,
-            on_delete=models.CASCADE)
     referer = models.ForeignKey(
             'DimReferer',
             db_column="referer_id",
-            to_field="id",
-            null=True,
-            on_delete=models.CASCADE)
-    region = models.ForeignKey(
-            'DimRegion',
-            db_column="region_id",
             to_field="id",
             null=True,
             on_delete=models.CASCADE)
@@ -582,7 +475,7 @@ class Blacklist(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = False
+        managed = True
         db_table = '%s_blacklist' % TABLE_PREFIX
 
     def __str__(self):
@@ -590,8 +483,6 @@ class Blacklist(models.Model):
 
     def __unicode__(self):
         return "%d" % self.id
-
-
 
 
 

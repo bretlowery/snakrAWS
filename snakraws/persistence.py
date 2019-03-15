@@ -13,7 +13,7 @@ from pythonjsonlogger import jsonlogger
 
 from snakraws import settings
 from snakraws.models import EVENT_TYPE, DEFAULT_EVENT_TYPE, DEFAULT_HTTP_STATUS_CODE, \
-    DimContinent, DimReferer, DimRegion, DimPostalCode, DimIP, DimHost, DimDevice, DimCountry, DimUserAgent, DimCity, FactEvent, \
+    DimGeoLocation, DimReferer, DimIP, DimHost, DimDevice, DimUserAgent, FactEvent, \
     LongURLs, ShortURLs
 from snakraws.utils import get_meta, get_hash, get_message
 from snakraws.ips import SnakrIP
@@ -201,25 +201,66 @@ class SnakrLogger(Exception):
             return m
 
         # dimension log_event helper function here to keep it within the scope of the transaction
-        def _get_or_create_geo_dimension(modelclass, strkey, unknown_value="unknown", missing_value="missing"):
-            if strkey in ipobj.geodict:
-                m = _get_or_create_dimension(modelclass, key=ipobj.geodict[strkey], name=ipobj.geodict[strkey])
-            else:
-                if ipobj.is_global:
-                    value = unknown_value
+        def _get_or_create_geo_value(ipobject, mutable, key, not_found_value):
+            if key in ipobject.geodict:
+                value = ipobject.geodict[key]
+            elif ipobject.ip.is_loopback:
+                if not_found_value:
+                    value = not_found_value
                 else:
-                    value = missing_value
-                m = _get_or_create_dimension(modelclass, key=value, name=value)
-            return m
+                    value = "loopback_ip"
+                mutable = False
+            elif ipobject.ip.is_private:
+                if not_found_value:
+                    value = not_found_value
+                else:
+                    value = "private_ip"
+                mutable = False
+            elif ipobject.ip.is_link_local:
+                if not_found_value:
+                    value = not_found_value
+                else:
+                    value = "link_local_ip"
+                mutable = False
+            elif ipobject.ip.is_multicast:
+                if not_found_value:
+                    value = not_found_value
+                else:
+                    value = "multicast_ip"
+                mutable = False
+            elif not_found_value:
+                value = not_found_value
+                mutable = False
+            else:
+                value = "unknown"
+                mutable = False
+            return value, mutable
 
 
         ip = _get_or_create_dimension(DimIP, key=ipobj.ip.exploded, ip=ipobj.ip.exploded)
-        #
-        city = _get_or_create_geo_dimension(DimCity, "city")
-        continent = _get_or_create_geo_dimension(DimContinent, "continent")
-        country = _get_or_create_geo_dimension(DimCountry, "country")
-        postalcode = _get_or_create_geo_dimension(DimPostalCode, "postalcode")
-        region = _get_or_create_geo_dimension(DimRegion, "region")
+
+        geohash, is_mutable = _get_or_create_geo_value(ipobj, True, "hash", get_hash("unknown"))
+        try:
+            geo = DimGeoLocation.objects.filter(hash=geohash).get()
+            if geo:
+                is_mutable = geo.is_mutable
+        except ObjectDoesNotExist:
+            geo = None
+            pass
+        if not geo:
+            geo = DimGeoLocation(hash=geohash, is_active=True)
+        if is_mutable:
+            geo.providername, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "provider", "unknown")
+            geo.postalcode, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "zip", "00000")
+            geo.lng = _get_or_create_geo_value(ipobj, is_mutable, "longitude", 0.0)
+            geo.lat = _get_or_create_geo_value(ipobj, is_mutable, "latitude", 0.0)
+            geo.city, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "city", "unknown")
+            geo.regionname, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "region_name", "unknown")
+            geo.regioncode, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "region_code", "zz")
+            geo.countryname, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "country_name", "unknown")
+            geo.countrycode, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "country_code", "zz")
+            geo.is_mutable = is_mutable
+            geo.save()
         #
         # device support TBD
         deviceid = "unknown"
@@ -230,15 +271,11 @@ class SnakrLogger(Exception):
         useragent = _get_or_create_dimension(DimUserAgent, key=useragent, useragent=useragent)
 
         if is_blacklisted(
-                city,
-                continent,
-                country,
+                geo,
                 device,
                 ip,
                 host,
-                postalcode,
                 referer,
-                region,
                 useragent):
             event_type = 'B'
             msg = EVENT_TYPE[event_type]
@@ -259,15 +296,11 @@ class SnakrLogger(Exception):
                 info=msg,
                 longurl=longurl,
                 shorturl=shorturl,
-                city=city,
-                continent=continent,
-                country=country,
+                geo=geo,
                 device=device,
                 host=host,
                 ip=ip,
-                postalcode=postalcode,
                 referer=referer,
-                region=region,
                 useragent=useragent
         )
         fact.save()

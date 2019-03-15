@@ -11,91 +11,89 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 import string
 
+
 def _(value):
     return value
 
 
-# YO: don't run with debug turned on in production!
-DEBUG = False
+# don't run with debug turned on in production!
+DEBUG = True
+SITE_ID = 1
 APP_NAME = "snakraws"
 VERBOSE_NAME = "SnakrAWS"
 PAGE_TITLE = "Snakr All-Vegetable URL Shortening"
 SITE_MODE = 'dev'
 DATABASE_MODE = 'dev'
 SSL_ENABLED = False  #TBD
+ENABLE_ANALYTICS = True
+ENABLE_LOGGING = True
+VERBOSE_LOGGING = True
 
-# the root domain of your URL shortening service
 if SITE_MODE == 'dev':
-    SHORTURL_HOST = "localhost:8000"            # YOUR LOCAL WEBSERVER INSTANCE INFO HERE
+    SHORTURL_HOST = "localhost:8000"
 else:
-    SHORTURL_HOST = "bret.guru"                 # YOUR PROD WEBSERVER INSTANCE INFO HERE
+    SHORTURL_HOST = "your.url.here"
 
-ALLOWED_HOSTS = [SHORTURL_HOST]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', ".%s" % SHORTURL_HOST, SHORTURL_HOST]
 
-# Location of the form used to shorten URLs is:
-SHORTENING_POSTBACK = "YOUR-DESIRED-FORM-URL-PATH-HERE-WITHOUT-SLASHES"
-# Make this public for those you want to be able to use the URL shortening service
-# Don't for those you don't
-# Don't include slashes in this value
-#
-# EXAMPLE: if you specify
-#    SHORTURL_HOST = "www.mysite.com"
-#  and
-#    SHORTENING_POSTBACK = "shorten"
-# THEN your page to shorten BOTH secure AND nonsecure URLs at will be
-#    http://www.mysite.com/shorten
-# and "shorten" will be disallowed as a vanity URL
-#
+SHORTENING_POSTBACK = "your-shortening-postback-url-here"
+ADMIN_POSTBACK = "your-Django-admin-postback-url-here"
+JET_POSTBACK = "jet"
+JET_DASHBOARD_POSTBACK = "jet/dashboard"
+
+# If the SHORTURL_HOST or SECURE_SHORTURL_HOST value is entered into a browser with no path, it will redirect to this page
+INDEX_HTML = "http://www.linkedin.com/in/bretlowery" # for example
+STATIC_URL = '/static/'
 
 # (Try to) prevent short URLs from containing profanity
 # It's nowhere near perfect and there's no guarantee, but at least it's something
 # FAST does a quick quality score check
-# DEEP does a deep blacklist check, BUT it adds 3-10x to the time needed to create a short URL
+# DEEP does a deep blacklist check, BUT it adds 2-10x to the time needed to create a short URL
 # Note this is ONLY done once at short URL generation, NOT at actual subsequent short URL lookup and redirection time
 #
 ENABLE_FAST_PROFANITY_CHECKING = True
 ENABLE_DEEP_PROFANITY_CHECKING = True
 #
 # If enabled, the following setting prevents the user from creating a short URL for any target (long) URL
-# that contains profane language. This requires that the target page be loaded and parsed by Snakr,
-# which may not be possible. Also note that this check is ONLY done once at short URL generation, NOT at actual
-# subsequent short URL lookup and redirection time, so if the target changes and profanity is added, we won't catch it.
-# This adds an additional up-to-30 seconds to the time needed to create a short URL, but times out after 30 seconds max.
+# that contains profane language: JUST the URL; it does NOT check the target's content AT the URL. Note that this check
+# is ONLY done once at short URL generation, NOT at actual subsequent short URL lookup and redirection time, so if the
+# target changes and profanity is added, we won't catch it.
+#
 # The same Fast and/or Deep checks will be made as the short URL, depending on the settings above.
 #
-ENABLE_LONG_URL_PROFANITY_CHECKING = False
+ENABLE_LONG_URL_PROFANITY_CHECKING = True
 
 # Postgres DB
 if DATABASE_MODE == 'dev':
     DATABASES = {
         'default': {
             'ENGINE':   'django.db.backends.postgresql_psycopg2',
-            'NAME':     'YOUR LOCAL POSTGRES DB NAME HERE',
+            'NAME':     'your-db-name-here',
             'HOST':     'localhost',
-            'USER':     'YOUR LOCAL POSTGRES USER NAME HERE',
-            'PASSWORD': 'YOUR LOCAL POSTGRES PASSWORD HERE',
-            'PORT':      5432,
+            'USER':     'your-username-here',
+            'PASSWORD': 'your-password-here',
+            'PORT':      65432,
         }
     }
 elif DATABASE_MODE == 'prod':
     DATABASES = {
         'default': {
             'ENGINE':   'django.db.backends.postgresql_psycopg2',
-            'NAME':     'YOUR AWS RDS POSTGRES DB NAME HERE',
-            'HOST':     'YOUR AWS RDS POSTGRES HOST NAME HERE',
-            'USER':     'YOUR AWS RDS POSTGRES USER NAME HERE',
-            'PASSWORD': 'YOUR AWS RDS POSTGRES PASSWORD HERE',
+            'NAME':     'your-db-name-here',
+            'HOST':     'your-aws-instance-name-here',
+            'USER':     'your-username-here',
+            'PASSWORD': 'your-password-here',
             'PORT':      5432,
         }
     }
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'YOUR DJANGO SECRET KEY HERE'
+SECRET_KEY = 'your-Django-secret-key-here'
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': '127.0.0.1:11211',  # YOUR MEMCACHED INFO HERE
+        'LOCATION': '127.0.0.1:11211',
     }
 }
 
@@ -108,12 +106,8 @@ USE_I18N = False
 USE_L10N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.1/howto/static-files/
-STATIC_URL = '/static/'
-
 # geolocation lookups
-GEOLOCATION_API_URL = "http://api.ipstack.com/%ip%?access_key=YOUR-IPSTACK-API-KEY-HERE"
+GEOLOCATION_API_URL = "http://api.ipstack.com/%ip%?access_key=your-ipstack-api-key-value-here"
 
 # Number of alphabetic characters in the short URL path (min 6, max 12)
 SHORTURL_PATH_SIZE = 6
@@ -121,12 +115,6 @@ SHORTURL_PATH_SIZE = 6
 # Character set to use for the short URL path. Remove easily-confused characters "0", "O", "o", "1", and "l". Keep "L".
 SHORTURL_PATH_ALPHABET = string.digits + string.ascii_letters
 SHORTURL_PATH_ALPHABET = SHORTURL_PATH_ALPHABET.replace("0", "").replace("O", "").replace("o", "").replace("1", "").replace("l", "")
-
-# DON"T change this
-APPEND_SLASH = False
-
-# If the SHORTURL_HOST or SECURE_SHORTURL_HOST value is entered into a browser with no path, it will redirect to this page
-INDEX_HTML = "http://www.linkedin.com/in/bretlowery"
 
 # If True, enable capture of the target long url's OpenGraph title ("og:title") and return it in the JSON along with the short url
 # See: http://ogp.me
@@ -138,8 +126,6 @@ RETURN_ALL_META = DEBUG
 # Logging messages
 #
 # Enable/disable HTTP 302, 400, 404 error logging
-ENABLE_LOGGING = True
-VERBOSE_LOGGING = False
 LOG_HTTP200 = True
 LOG_HTTP301 = True
 LOG_HTTP302 = True
@@ -147,7 +133,6 @@ LOG_HTTP400 = True
 LOG_HTTP403 = True
 LOG_HTTP404 = True
 LOG_PATH = '/var/logs'
-ENABLE_ANALYTICS = True
 
 # sorted in rough order of probability of occurrence for lookup performance
 CANONICAL_MESSAGES = {
@@ -192,7 +177,10 @@ CANONICAL_MESSAGES = {
 
 MESSAGE_OF_LAST_RESORT = 'ERROR, an unknown exception occurred'
 
-USER_AGENT = "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) (if u can read this, someone resolved a URL to you using me)"
+#USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+USER_AGENT = "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) " \
+             "(if u can read this, someone resolved a URL to you using me)"
+
 
 BADBOTLIST = ['1job', 'abot', 'agentname', 'apachebench', 'aport', 'applesyndication', 'ask jeeves', 'ask+jeeves',
         'atomz', 'avantgo', 'baiduspider', 'blitzbot', 'bloglines', 'bordermanager', 'changedetection',
@@ -249,6 +237,11 @@ RESERVED_PATHS = [
     _('media'),
     _('theme'),
     _('robot'),
+    _('ads'),
     _('image'),
-    SHORTENING_POSTBACK
+    'localhost',
+    SHORTENING_POSTBACK,
+    ADMIN_POSTBACK,
+    JET_POSTBACK,
+    JET_DASHBOARD_POSTBACK
     ]

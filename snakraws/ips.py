@@ -90,8 +90,10 @@ class SnakrIP:
             if not is_error:
                 setattr(self, k, v)
                 self.geodict[k] = v
-                if k in ["city", "continent_name", "country_name", "region_name", "zip"] and isinstance(v, str):
-                    k = "%s_%s" % (k, "hash")
+                # if k in ["city", "continent_name", "country_name", "region_name", "zip"] and isinstance(v, str):
+                if k == "zip" and isinstance(v, str):
+                    #k = "%s_%s" % (k, "hash")
+                    k = "hash"
                     v = get_hash(v.lower())
                     setattr(self, k, v)
                     self.geodict[k] = v

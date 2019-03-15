@@ -1,11 +1,12 @@
-bs4
+bs4>=0.0.1
 django>=2.1.6
+django-jet>=1.0.8
 ipaddress>=1.0.22
 requests>=2.21
 pdfminer.six
 profanity-check>=1.0.2
-profanityfilter
 profanity-filter>=1.0.4
+profanityfilter>=2.0.6
 psycopg2-binary>=2.7.7
 python-json-logger>=0.1.10
 python-opengraph>=0.0.2
