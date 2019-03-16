@@ -21,4 +21,4 @@ Custom short URL generator + usage analytics, ported from Google Cloud/Python 2 
 | SHORTURL_PATH_SIZE | The size of the short URL path to generate; set it to no less than 5. For example, if set to 6, short URLs will look like "http://my.site/a6yEw4" or "http://my.site/9ueRTT". Does not affect the size of custom "vanity" URLs if the vanity path is supplied on the short URL form; any vanity size can be used up to 40 characters. Changing this value does not affect short URLs already generated; they can continue to be used and will work as-is. You can make this value bigger or smaller anytime you want. |
 | SHORTURL_PATH_ALPHABET | Specifies the characters allowed in short URLs. These must be URL-safe characters. Defaults to all digits, a-z, and A-Z, except the easily-confused characters "0", "O", "o", "1", and "l". |
 | CANONICAL_MESSAGES | List of messages that can be returned by Snakr. |
-| BADBOTLIST | List of known bots that are 403d by Snakr. |
+| BADBOTLIST | List of known bots that are 403d by Snakr. You should really use a front-end solution for this. |
