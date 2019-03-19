@@ -1,6 +1,67 @@
 # snakrAWS
 Custom short URL generator + usage analytics, ported from Google Cloud/Python 2 to AWS/Postgres RDS/Python 3
 
+### Prerequisites for Installation
+- An AWS account
+- An AWS EC2 Ubuntu t2_micro or better instance up and running with the associated key pair (SnakrAWS has only been tested with Ubuntu)
+- An RDS Postgres 10.6+ database up and running
+- An AWS Security Group set up so that the instance and database can communicate with each other
+- SSH shell access to your instance
+
+### Installation
+
+1. SSH to your instance as the ubuntu user;
+2. Install the basic packages needed. This is an exercise left to the reader:
+- Git
+- Nginx
+- Postgres 10.6+ client
+- OpenSSL
+- Python 3.7+
+- Django 2.1+
+3. Clone the repo:
+```
+$ sudo mkdir /var/www
+$ sudo chown ubuntu:ubuntu /var/www
+$ cd /var/www
+$ git clone https://github.com/bretlowery/snakrAWS.git snakraws && cd snakraws
+```
+4. Create your inital SnakrAWS database in your RDS instance and load the tables with initial data. Use the PSQL command or your favorite SQL UI. These are example commands but may differ depending on your security setup:
+```
+$ psql -U postgres -d postgres -H your.aws.rds.host -P portnumber
+> CREATE DATABASE snakraws;
+> CREATE USER snakraws WITH PASSWORD 'your-really-strong-password-here';
+> GRANT ALL ON DATABASE snakraws TO snakraws;
+$ psql -U snakraws -d snakraws -H your.aws.rds.host -P portnumber -a -f install_snakraws.sql
+Password: your-really-strong-password-here
+```
+5. Update local_settings.py and add your custom settings, after making a backup copy of it. Refer to the Settings section below if needed:
+```
+$ cp snakraws/local_settings.py local_settings.original.py
+$ vim snakraws/local_settings.py
+```
+6. Create your Python 3.7 virtualenv and update pip first thing:
+```
+$ virtualenv venv -p python3
+$ source venv/bin/activate
+(venv) $ pip install -U pip
+```
+7. Install the prerequisite Python packages that SnakrAWS needs:
+```
+(venv) $ pip install -r requirements.txt
+```
+8. Install the Django admin tables and initial data:
+```
+(venv) $ ./manage.py migrate
+```
+9. Configure and start nginx:
+```
+TBD
+```
+10. Configure and start uWSGI:
+```
+TBD
+```
+
 ### Custom Settings
 | Setting | Description |
 | --- | --- |
