@@ -63,7 +63,7 @@ https://www.digitalocean.com/community/tutorials/how-to-serve-django-application
 ```
 sudo vim /etc/nginx/conf.d/your.snakraws.com-net-gov-whatever.conf
 ```
-Conf file:
+    Conf file:
 ```
 server {
     listen             80;
@@ -132,22 +132,22 @@ server {
                                      
 }
 ```
-Test that conf before you deploy with:
+11. Test that conf before you deploy with:
 ```
 $ sudo nginx -t
 ```
-If it's ok, start nginx with:
+12. If it's ok, start nginx with:
 ```
 $ sudo service nginx start
 ```
-11. Configure and start either uWSGI or gunicorn. Here, I'm using gunicorn. For more examples see:
+13. Configure and start either uWSGI or gunicorn. Here, I'm using gunicorn. For more examples see:
 https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
 ```
 $ sudo mkdir /var/log/your.snakraws.com-net-gov-whatever
 $ sudo chown www-data:www-data /var/log/your.snakraws.com-net-gov-whatever
 $ sudo vim /etc/systemd/system/your.snakraws.com-net-gov-whatever.service
 ```
-Then add:
+14. Set up your gunicorn conf file:
 ```
 [Unit]
 Description=your.snakraws.com-net-gov-whatever
@@ -175,12 +175,12 @@ ExecStart=/var/www/django/venv/bin/gunicorn \
 [Install]
 WantedBy=multi-user.target
 ```
-Add it to systemctl and start the service:
+15. Add it to systemctl and start the service:
 ```
 $ sudo systemctl enable your.snakraws.com-net-gov-whatever.service
 $ sudo systemctl start your.snakraws.com-net-gov-whatever
 ```
-Check the error log:
+16. Finally, check the error log. If everything is running, test your site!
 ```
 $ cat /var/log/your.snakraws.com-net-gov-whatever/errors.log
 ```
