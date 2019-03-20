@@ -1,5 +1,53 @@
 # snakrAWS
-Custom short URL generator + usage analytics, ported from Google Cloud/Python 2 to AWS/Postgres RDS/Python 3
+Custom short URL generator + usage analytics, ported from my original Snakr Google Cloud/Python 2/Django 1.6 repo to AWS/Postgres RDS/Python 3.6+/Django 2.1+
+
+## Background 
+URL shorteners are used to generate a smaller “abbreviated” version of a URL so that the smaller URL can be used as an alias in place of the longer URL. Subsequent calls to the smaller URL will redirect to the same resource originally identified by the longer URL, including all querystring parameters and other valid URL components. This is useful for several reasons:
+
+Upside                                          | Reason
+----------------------------------------------- | ------------------------------
+Easier to use (“beautification”)               | It can be substantially easier to enter, copy, paste, manipulate, remember, or otherwise use a shorter URL rather than its longer version. Smaller is inherently “more beautiful” than longer.
+Less prone to breakage                          | Longer URLs can be broken when embedded in documents, messages, etc. due to misentry, mispaste, line wrapping breakages, or cutoffs due to data length limitations in standards and tools like SMS or Twitter. Shorter URLs are less prone to these problems.
+Less bandwidth used                             | Shorter URLs require less transmission sources that longer ones, a problem that increasingly manifests itself at scale.
+Less storage used                               | If the URLs are stored, the shorter URL will use less space.
+
+There are downsides to URL shorteners:
+
+Downside                                                | Reason
+------------------------------------------------------- | ------------------------------
+Short URL as fraud enabler                              | Shorteners have been used to obfuscate the origin of traffic, beat blacklists, track user engagement activity surreptitiously, etc. Shortener services identified as trafficking in a lot of this can find themselves blacklisted, to the detriment of the service’s users and thus the service itself.
+Short URLs can hide payload malfeasance in the long URL | URLs may contain payloads such as SQL injection, etc. in the query string or other components. A shortener that encodes and scrubs the URL first for safety can return a short URL that itself is guaranteed not to contain such issues (since it is generated), but return them to the caller when resolved to the long URL.
+Negative effects on SEO, CTR, etc.                      | Shortened URLs may not rank as high or at all in search engine results versus their longer URL parents. This could pose problems is use cases where SEO matters. The same is true when short URLs are delivered via ads or links exposed to end users who may not recognize them and thus be less likely to clickthru, thereby affecting monetization, traffic, campaign optimization, future campaign targeting accuracy, etc.
+
+## Performance
+
+Snakr can create and return a short url in under 2s on smallest-possible GC and GAE settings. I haven't load tested this at volume but assume GC can handle growth.
+
+## Features Provided 
+
+1.	URLs can be shortened using either a form, or via a REST API.
+  1.	POST is used to turn a long URL into a shortened URL.
+  2.	A subsequent GET is used to redirect the shortened URL to its long URL target.
+    
+2.	URLs are cleansed and validate before shortening.
+  1. Only valid URLs are recongnized (see “Non-goals” #2 below for the definition of “valid”).
+  2. SSL/TLS is honored on both ends. HTTP long URLs create HTTP short URLs, while HTTPS long URLs create HTTPS short URLs. Ditto FTP and SFTP.
+  3. Per RFC 3986, schemas and domains/hosts/netlocs are treated as case-insensitive, while the rest of the URL is treated as case-sensitive. For example, three URLs identical in all aspects other than the schemas“http”, “hTtP”, and “HTTP” are all treated as identical and generate identical short URLs for the same .
+  4. The design and code should support global character sets. Additional testing would be needed here prior to production-ready.
+
+3.	Duplicate long URLs submitted to the shortening service will generate only one short URL on the first call. Subsequent calls with the same long URL return the existing short URL.
+
+4.	Short URL paths are generated from a random selection of DNS-safe characters (A-Z, a-z-, and 0-9, although the exact set of characters used can be modified via a metadata change). 
+
+5.	The number of characters used defaults to 6; this is also modifiable up to 12 via a metadata change. 
+
+6.	Easily-confused character combinations are excluded. No short URLs are generated which contain both:
+  1. A “0” (zero) and an “O” (uppercase letter ‘oh’), and/or;
+  2. A “1” (one) and a “l” (lowercase letter ‘ell’).
+
+7.	If a collision is detected (a 2nd long url hash to the same short URL, an improbable occurance whose probablity defaults to 1 in 1.886 billion), the short URL is regenerated. This repeats until a unique short URL is generated. The number of max retries is set in the metadata as well, and defaults to 3. Increasing the size of the short URL generated by one in the MAXSIZE parameter in the metadata greatly increases the number of possible combinations at the expense of a short URL one character longer. If MAXSIZE is increased, old URLs using the smaller size still work, and you can even flip back to the old size later and both sizes will still resolve.
+
+8.  Basic bot and crawler blocking is available. A blacklist of known bot user agent strings is provided. Any request coming from a user agent containing one of the strings in the blacklist will be 403d.
 
 ### Prerequisites for Installation
 - An AWS account
