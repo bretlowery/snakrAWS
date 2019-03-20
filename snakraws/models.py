@@ -117,7 +117,7 @@ class DimGeoLocation(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimgeolocations' % TABLE_PREFIX
 
     def __str__(self):
@@ -142,7 +142,7 @@ class DimDevice(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimdevices' % TABLE_PREFIX
 
     def __str__(self):
@@ -167,7 +167,7 @@ class DimHost(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimhosts' % TABLE_PREFIX
 
     def __str__(self):
@@ -192,7 +192,7 @@ class DimIP(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimips' % TABLE_PREFIX
 
     def __str__(self):
@@ -250,7 +250,7 @@ class DimReferer(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimreferers' % TABLE_PREFIX
 
     def __str__(self):
@@ -274,7 +274,7 @@ class DimUserAgent(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_dimuseragents' % TABLE_PREFIX
 
     def __str__(self):
@@ -301,7 +301,7 @@ class LongURLs(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_longurls' % TABLE_PREFIX
 
     def __str__(self):
@@ -339,7 +339,7 @@ class ShortURLs(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_shorturls' % TABLE_PREFIX
 
     def __str__(self):
@@ -418,7 +418,7 @@ class FactEvent(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_factevents' % TABLE_PREFIX
 
     def __str__(self):
@@ -475,7 +475,7 @@ class Blacklist(models.Model):
 
     class Meta:
         app_label = TABLE_PREFIX
-        managed = True
+        managed = False
         db_table = '%s_blacklist' % TABLE_PREFIX
 
     def __str__(self):

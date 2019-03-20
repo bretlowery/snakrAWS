@@ -2,7 +2,6 @@
 .idea/
 __pycache__/
 db.sqlite3
-manage.py
 snakraws/__pycache__/
 snakraws/migrations/
 venv/bin/__pycache__/
@@ -162,5 +161,8 @@ venv/lib/python3.7/site-packages/tests/test_level4/test_target_within.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_user_invalid.py
 venv/lib/python3.7/site-packages/tests/test_level4/test_where.py
 /snakraws/local_settings.py
-!/snakraws/templates/base.html
-!/snakraws/templates/shorten_url.html
+/snakraws/management/commands/load_geolocations_from_csv.py
+/snakraws/management/__init__.py
+/snakraws/management/commands/__init__.py
+/snakraws/management/commands/
+/snakraws/management/

@@ -2,9 +2,7 @@
 LongURLs.py contains the logic necessary to consume a long URL and return a short URL for it.
 '''
 
-from urllib.request import urlopen
 from urllib.parse import urlparse
-from urllib.error import URLError
 # from filetransfers.api import serve_file
 
 from django.http import Http404

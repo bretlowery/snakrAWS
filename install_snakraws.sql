@@ -1,3 +1,7 @@
+CREATE USER ddd WITH PASSWORD 'asas';
+DROP USER ddd;
+SELECT VERSION();
+
 DROP TABLE IF EXISTS snakraws_blacklist;
 DROP TABLE IF EXISTS snakraws_factevents;
 DROP TABLE IF EXISTS snakraws_dimgeolocations;

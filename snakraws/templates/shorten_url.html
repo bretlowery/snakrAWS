@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+    <link rel="icon" href="data:;base64,">
+{% endblock %}
+
+{% block content %}
+    <form method="POST" class="post-form">{% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="save btn btn-default">&nbsp;{{ submit_label }}&nbsp;</button>
+    </form>
+    {% if message %}
+        <br/>
+        <br/>
+    {% if '200 ' in message %}
+        <span class="alert alert-success">
+    {% else %}
+        <span class="alert alert-danger">
+    {% endif %}
+            <strong>Result:&nbsp;</strong>{{ message }}
+        </span>
+    {% endif %}
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    {% if shorturl %}
+        <span class="alert alert-info"><strong>Short URL:&nbsp</strong>{{ shorturl }}</span>
+    {% endif %}
+{% endblock %}

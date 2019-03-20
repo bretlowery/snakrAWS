@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ title }}</title>
+        <meta charset="UTF-8">
+        <link rel="icon" href="data:;base64,">
+        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+        <link href='//fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+        <style>
+            input[type=url] {
+              width: 100%;
+              padding: 12px 20px;
+              margin: 8px 0;
+              box-sizing: border-box;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page-header">
+            <h1>&nbsp;{{ heading }}</h1>
+        </div>
+        <div class="content container">
+            <div class="row">
+                <div class="col-md-8">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
