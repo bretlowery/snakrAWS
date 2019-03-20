@@ -26,7 +26,7 @@ Negative effects on SEO, CTR, etc.                      | Shortened URLs may not
 3. Per RFC 3986, schemas and domains/hosts/netlocs are treated as case-insensitive, while the rest of the URL is treated as case-sensitive. For example, three URLs identical in all aspects other than the schemas“http”, “hTtP”, and “HTTP” are all treated as identical and generate identical short URLs for the same.
 4. The Python 3 design uses Unicode and i18n so global character sets and alternative languages are supported. L10n is supported but untested.
 5. Duplicate long URLs submitted to the shortening service will generate only one short URL on the first call. Subsequent calls with the same long URL return the existing short URL.
-6.	Short URL paths are generated from a random selection of DNS-safe characters (A-Z, a-z-, and 0-9, although the exact set of characters used can be modified via a metadata change). 
+6.	Short URL paths are generated from a random selection of URL-safe characters (A-Z, a-z-, and 0-9, although the exact set of characters used can be modified via a metadata change). 
 7.	The number of characters used defaults to 6; this is also modifiable up to 12 via a metadata change. 
 8.	Easily-confused character combinations are excluded. No short URLs are generated which contain both:
 - A “0” (zero) and an “O” (uppercase letter ‘oh’), and/or;
