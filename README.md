@@ -4,7 +4,7 @@ Custom short URL generator + usage analytics, ported from Google Cloud/Python 2 
 ### Prerequisites for Installation
 - An AWS account
 - An AWS EC2 Ubuntu t2_micro or better instance up and running with the associated key pair (SnakrAWS has only been tested with Ubuntu)
-- An RDS Postgres 10.6+ database up and running
+- A RDS Postgres 10.6+ database up and running
 - An AWS Security Group set up so that the instance and database can communicate with each other
 - SSH shell access to your instance
 
