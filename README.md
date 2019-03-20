@@ -19,10 +19,6 @@ Short URL as fraud enabler                              | Shorteners have been u
 Short URLs can hide payload malfeasance in the long URL | URLs may contain payloads such as SQL injection, etc. in the query string or other components. A shortener that encodes and scrubs the URL first for safety can return a short URL that itself is guaranteed not to contain such issues (since it is generated), but return them to the caller when resolved to the long URL.
 Negative effects on SEO, CTR, etc.                      | Shortened URLs may not rank as high or at all in search engine results versus their longer URL parents. This could pose problems is use cases where SEO matters. The same is true when short URLs are delivered via ads or links exposed to end users who may not recognize them and thus be less likely to clickthru, thereby affecting monetization, traffic, campaign optimization, future campaign targeting accuracy, etc.
 
-## Performance
-
-Snakr can create and return a short url in under 2s on smallest-possible GC and GAE settings. I haven't load tested this at volume but assume GC can handle growth.
-
 ## Features Provided 
 
 1.	URLs can be shortened using either a form, or via a REST API.
