@@ -49,17 +49,140 @@ $ source venv/bin/activate
 ```
 (venv) $ pip install -r requirements.txt
 ```
-8. Install the Django admin tables and initial data:
+8. Install the Spacy english library:
+```
+(venv) $ python -m spacy download en
+```
+9. Install the Django admin tables and initial data, then deactivate your virtualenv:
 ```
 (venv) $ ./manage.py migrate
+(venv) $ deactivate
 ```
-9. Configure and start nginx:
+10. Configure and start nginx. Here is a basic conf script that you can modify. See the nginx docs online for more details, or for more examples see:
+https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
 ```
-TBD
+sudo vim /etc/nginx/conf.d/your.snakraws.com-net-gov-whatever.conf
 ```
-10. Configure and start uWSGI:
+Conf file:
 ```
-TBD
+server {
+    listen             80;
+    server_tokens      off;
+    server_name        your.snakraws.com-net-gov-whatever;
+    return             301 http://your.snakraws.com-net-gov-whatever$request_uri;
+}
+
+server {
+    listen                   80;
+    server_name              snakraws.com-net-gov-whatever;
+    client_max_body_size     10M;
+    access_log               /var/log/your.snakraws.com-net-gov-whatever.access.log;
+    error_log                /var/log/your.snakraws.com-net-gov-whatever.error.log;
+   
+    # -------------
+    # Handle Django
+    # -------------
+    location / {
+        proxy_pass       http://localhost:8000;
+        proxy_set_header Upgrade            $http_upgrade;
+        proxy_set_header Connection         "upgrade";
+        proxy_set_header Host               $host;
+        proxy_set_header X-Real-IP          $remote_addr;
+        proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto  $scheme;
+    }
+    
+    # ------------------
+    # serve static files
+    # ------------------
+
+    location /static/ {
+        alias   /var/www/django/static/;
+    }
+    
+    # -----------
+    # Enable GZIP
+    # -----------
+    gzip               on;
+    gzip_disable       "msie6";                                            
+    gzip_vary          on;                                                     
+    gzip_types         text/plain
+                       text/css
+                       application/json
+                       application/javascript
+                       application/x-javascript
+                       text/xml
+                       application/xml
+                       application/xml+rss
+                       text/javascript
+                       image/svg+xml;
+    gzip_proxied       any;
+    gzip_comp_level    6;                                                
+    gzip_buffers       16  8k;  
+    gzip_http_version  1.0;   
+    
+    location ~* .(ogg|ogv|svg|svgz|eot|otf|woff|mp4|ttf|css
+                  |rss|atom|js|jpg|jpeg|gif|png|ico|zip|tgz
+                  |gz|rar|bz2|doc|xls|exe|ppt|tar|mid|midi
+                  |wav|bmp|rtf)$ {
+        expires max;
+        log_not_found off;
+        access_log off;
+    }    
+                                     
+}
+```
+Test that conf before you deploy with:
+```
+$ sudo nginx -t
+```
+If it's ok, start nginx with:
+```
+$ sudo service nginx start
+```
+11. Configure and start either uWSGI or gunicorn. Here, I'm using gunicorn. For more examples see:
+https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+```
+$ sudo mkdir /var/log/your.snakraws.com-net-gov-whatever
+$ sudo chown www-data:www-data /var/log/your.snakraws.com-net-gov-whatever
+$ sudo vim /etc/systemd/system/your.snakraws.com-net-gov-whatever.service
+```
+Then add:
+```
+[Unit]
+Description=your.snakraws.com-net-gov-whatever
+Requires=nginx.service
+Wants=nginx.service
+After=nginx.service
+[Service]
+WorkingDirectory=/var/www/django
+PIDFile=/var/run/your.snakraws.com-net-gov-whateverv.pid
+Type=forking
+KillMode=process
+#Restart=on-failure
+ExecStart=/var/www/django/venv/bin/gunicorn \
+          --log-level debug \
+          --group www-data \
+          --user www-data \
+          --timeout 120 \
+          --workers 3 \
+          --bind=127.0.0.1:8081 \
+          --pid=/var/run/your.snakraws.com-net-gov-whatever.pid \ 
+          --pythonpath=/var/www/django \
+          --error-logfile=/var/log/your.snakraws.com-net-gov-whatever/errors.log \
+          --daemon \
+         snakraws.wsgi
+[Install]
+WantedBy=multi-user.target
+```
+Add it to systemctl and start the service:
+```
+$ sudo systemctl enable your.snakraws.com-net-gov-whatever.service
+$ sudo systemctl start your.snakraws.com-net-gov-whatever
+```
+Check the error log:
+```
+$ cat /var/log/your.snakraws.com-net-gov-whatever/errors.log
 ```
 
 ### Custom Settings
