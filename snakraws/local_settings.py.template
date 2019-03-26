@@ -22,19 +22,20 @@ SITE_ID = 1
 APP_NAME = "snakraws"
 VERBOSE_NAME = "SnakrAWS"
 PAGE_TITLE = "Snakr All-Vegetable URL Shortening"
+AWS_ELASTIC_IP = "your.aws.elastic.ip"
 SITE_MODE = 'dev'
 DATABASE_MODE = 'dev'
-SSL_ENABLED = False  #TBD
 ENABLE_ANALYTICS = True
 ENABLE_LOGGING = True
 VERBOSE_LOGGING = True
+SSL_ENABLED = True
 
 if SITE_MODE == 'dev':
     SHORTURL_HOST = "localhost:8000"
 else:
     SHORTURL_HOST = "your.url.here"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', ".%s" % SHORTURL_HOST, SHORTURL_HOST]
+ALLOWED_HOSTS = [AWS_ELASTIC_IP, 'localhost', '127.0.0.1', '[::1]', ".%s" % SHORTURL_HOST, SHORTURL_HOST]
 
 SHORTENING_POSTBACK = "your-shortening-postback-url-here"
 ADMIN_POSTBACK = "your-Django-admin-postback-url-here"
@@ -171,11 +172,11 @@ CANONICAL_MESSAGES = {
         'LOADING_BOTLIST'               : _('Loading known botlist'),
         'READY'                         : _('Snakr is ready and listening'),
         'SHUTDOWN'                      : _('Snakr stopping'),
-        'HASH_COLLISION'                : _('WARNING, hash collision detected on URL {%s}.'),
-        'LANGUAGE_ADDENDUM'             : _(" or contains language flagged as inappropriate"),
+        'HASH_COLLISION'                : _('WARNING, hash collision detected on URL {%s}.')
     }
 
 MESSAGE_OF_LAST_RESORT = 'ERROR, an unknown exception occurred'
+LANGUAGE_ADDENDUM = _(' or contains language flagged as inappropriate')
 
 #USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
 USER_AGENT = "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) " \

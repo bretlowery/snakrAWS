@@ -120,14 +120,7 @@ class SnakrLogger(Exception):
             if (settings.VERBOSE_LOGGING or verbose) and request:
                 jsondata['lu'] = str(longurl.id)
                 jsondata['su'] = str(shorturl.id)
-                jsondata['ip'] = ipobj.ip.exploded
-                #jsondata['lat'] = str(ipobj.
-                #jsondata['long'] = str(geo_long)
-                #jsondata['city'] = str(geo_city)
-                #jsondata['cnty'] = str(geo_country)
-                #jsondata['host'] = str(http_host)
-                #jsondata['ua'] = str(http_useragent)
-                #jsondata['ref'] = http_referer
+                jsondata['ip'] = ipobj.ip
 
             msg = "%s %s" % (dtnow, msg)
 
@@ -236,9 +229,7 @@ class SnakrLogger(Exception):
                 mutable = False
             return value, mutable
 
-
-        ip = _get_or_create_dimension(DimIP, key=ipobj.ip.exploded, ip=ipobj.ip.exploded)
-
+        ip = _get_or_create_dimension(DimIP, key=ipobj.ip, ip=ipobj.ip)
         geohash, is_mutable = _get_or_create_geo_value(ipobj, True, "hash", get_hash("unknown"))
         try:
             geo = DimGeoLocation.objects.filter(hash=geohash).get()
@@ -248,12 +239,20 @@ class SnakrLogger(Exception):
             geo = None
             pass
         if not geo:
-            geo = DimGeoLocation(hash=geohash, is_active=True)
+            geo = DimGeoLocation(hash=geohash)
         if is_mutable:
             geo.providername, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "provider", "unknown")
             geo.postalcode, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "zip", "00000")
-            geo.lng = _get_or_create_geo_value(ipobj, is_mutable, "longitude", 0.0)
-            geo.lat = _get_or_create_geo_value(ipobj, is_mutable, "latitude", 0.0)
+            geolng = _get_or_create_geo_value(ipobj, is_mutable, "longitude", 0.0)
+            if geolng:
+                geo.lng = geolng[0]
+            else:
+                geo.lng = 0.0
+            geolat = _get_or_create_geo_value(ipobj, is_mutable, "latitude", 0.0)
+            if geolat:
+                geo.lat = geolat[0]
+            else:
+                geo.lat = 0.0
             geo.city, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "city", "unknown")
             geo.regionname, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "region_name", "unknown")
             geo.regioncode, is_mutable = _get_or_create_geo_value(ipobj, is_mutable, "region_code", "zz")

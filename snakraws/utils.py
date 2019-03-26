@@ -406,17 +406,21 @@ def is_profane(url):
             partslist = partslist + re.split(splitters, parts.query)
 
         # speed optimization
+        check4btlw = True
         stringlist = []
         for item in partslist:
             if len(item) > 0:
+                if len(item) > 5:
+                    check4btlw = False
                 for substring in get_all_substrings(item, 2):
                     if len(substring) > 0:
                         stringlist.append(substring)
         partslist = list(dict.fromkeys(stringlist))  # removes dupes
 
-        for part in partslist:
-            if part in BAD_THREE_LETTER_WORDS:
-                return True
+        if check4btlw:
+            for part in partslist:
+                if part in BAD_THREE_LETTER_WORDS:
+                    return True
 
         score = PredictProfanity(partslist)
         if score.any() == 1:
