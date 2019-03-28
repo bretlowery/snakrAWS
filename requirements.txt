@@ -1,6 +1,7 @@
 bs4>=0.0.1
 django>=2.1.6
 django-jet>=1.0.8
+django-recaptcha3>=0.1.0
 ipaddress>=1.0.22
 requests>=2.21
 pdfminer.six

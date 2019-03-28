@@ -21,10 +21,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Application definition
 INSTALLED_APPS = (
+    'snowpenguin.django.recaptcha3',
     'snakraws',
     'jet.dashboard',
     'jet',
-    'snowpenguin.django.recaptcha3',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
