@@ -4,6 +4,9 @@ Centralized persistence and logging for Snakr. Wraps the Django core logging sys
 
 import logging
 import datetime
+import requests
+import uuid
+from urllib.parse import quote
 
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.http import Http404, HttpResponseServerError
@@ -12,7 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from pythonjsonlogger import jsonlogger
 
 from snakraws import settings
-from snakraws.models import EVENT_TYPE, DEFAULT_EVENT_TYPE, DEFAULT_HTTP_STATUS_CODE, \
+from snakraws.models import EVENT_TYPE, DEFAULT_EVENT_TYPE, HTTP_STATUS_CODE, DEFAULT_HTTP_STATUS_CODE, \
     DimGeoLocation, DimReferer, DimIP, DimHost, DimDevice, DimUserAgent, FactEvent, \
     LongURLs, ShortURLs
 from snakraws.utils import get_meta, get_hash, get_message
@@ -36,6 +39,10 @@ class SnakrLogger(Exception):
         self.last_ip_address = 'N/A'
         self.last_dtnow = 'N/A'
         self.last_http_user_agent = 'N/A'
+        self.enable_ga = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
+        self.ga_tid = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
+        self.cid = str(uuid.uuid4())
+
         return
 
     def log(self, **kwargs):
@@ -109,7 +116,8 @@ class SnakrLogger(Exception):
                         ipobj,
                         hostname,
                         useragent,
-                        referer
+                        referer,
+                        self.cid
                 )
                 jsondata['event'] = str(db_id)
 
@@ -151,12 +159,43 @@ class SnakrLogger(Exception):
                 }.get(x, 200)
 
             if status_code != 0:
-                return switch(status_code)
+                status = switch(status_code)
+                if self.enable_ga:
+                    if "country_code" in ipobj.geodict:
+                        cc = ipobj.geodict["country_code"]
+                    elif "countrycode" in ipobj.geodict:
+                        cc = ipobj.geodict["countrycode"]
+                    else:
+                        cc = ""
+                    gad = {
+                        'v':        1,
+                        'tid':      self.ga_tid,
+                        'ds':       'web',
+                        't':        HTTP_STATUS_CODE[abs(status_code)],
+                        'cid':      self.cid,
+                        'uip':      ipobj.ip,
+                        'ua':       quote(useragent),
+                        'geoid':    cc,
+                        'dr':       quote(referer),
+                        'dl':       quote(shorturl.shorturl),
+                        'cd1':      'Snakr Long URL',
+                        'cm1':      quote(longurl.longurl),
+                        'cd2':      'Snakr Short URL',
+                        'cm2':      quote(shorturl.shorturl),
+                        'cd3':      'Snakr Status',
+                        'cm3':      msg
+                    }
+                    try:
+                        r = requests.post("www.google-analytics.com/collect", data=gad)
+                    except:
+                        pass
+
+                return status
 
         return
 
     @staticmethod
-    def _log_event(request, dt, event_type, status_code, msg, shorturl, longurl, ipobj, hostname, useragent, referer):
+    def _log_event(request, dt, event_type, status_code, msg, shorturl, longurl, ipobj, hostname, useragent, referer, cid):
 
         # dimension log_event helper function here to keep it within the scope of the transaction
         def _get_or_create_dimension(modelclass, **kwargs):
@@ -300,7 +339,8 @@ class SnakrLogger(Exception):
                 host=host,
                 ip=ip,
                 referer=referer,
-                useragent=useragent
+                useragent=useragent,
+                cid=cid
         )
         fact.save()
 

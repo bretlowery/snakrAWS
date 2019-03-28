@@ -8,6 +8,8 @@ from snakraws import settings
 from snakraws.models import LongURLs
 from snakraws.utils import get_message
 
+from snowpenguin.django.recaptcha3.fields import ReCaptchaField
+
 class ShortForm(forms.ModelForm):
     longurl = forms.URLField(
             max_length=1024,
@@ -19,6 +21,7 @@ class ShortForm(forms.ModelForm):
             required=False,
             label=_('Vanity path to apply, if any:')
     )
+    captcha = ReCaptchaField()
 
     class Meta:
         model = LongURLs

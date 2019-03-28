@@ -149,6 +149,7 @@ create table snakraws_factevents (
   event_yyyymmdd   CHAR(8) DEFAULT TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDD') NOT NULL,
   event_hhmiss     CHAR(6) DEFAULT TO_CHAR(CURRENT_TIMESTAMP, 'HH24MISS') NOT NULL,
   event_type       CHAR(1) NOT NULL CHECK (event_type IN ('B','D','E','I','L','N','R','S','U','W','X','Z')),
+  cid              VARCHAR(32)                                        NULL,
   http_status_code SMALLINT                                           NOT NULL,
   info             VARCHAR(8192)                                      NOT NULL,
   longurl_id       INT                                                NOT NULL,

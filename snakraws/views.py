@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.http import HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext_lazy as _
 from django.forms.forms import NON_FIELD_ERRORS
+from django.contrib.auth.decorators import login_required
 
 from snakraws import settings
 from snakraws.shorturls import ShortURL
@@ -135,6 +136,7 @@ def test_post_handler(request, *args, **kwargs):
     return HttpResponse("<H2>Test value: {%s}</H2>", content_type="text/html")
 
 
+@login_required
 def form_handler(request, *args, **kwargs):
     message = ""
     shorturl = ""

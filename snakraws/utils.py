@@ -351,6 +351,13 @@ def get_shortening_postback():
     return '^%s/?$' % getattr(settings, 'SHORTENING_POSTBACK', 'shorten')
 
 
+def get_shortening_redirect():
+    if getattr(settings, "SSL_ENABLED", False):
+        return 'https://%s/%s' % (getattr(settings, 'SECURE_SHORTURL_HOST'), getattr(settings, 'SHORTENING_POSTBACK', 'shorten'))
+    else:
+        return 'http://%s/%s' % (getattr(settings, 'SHORTURL_HOST'), getattr(settings, 'SHORTENING_POSTBACK', 'shorten'))
+
+
 def get_admin_postback():
     return '^%s/?' % getattr(settings, 'ADMIN_POSTBACK', 'admin')
 

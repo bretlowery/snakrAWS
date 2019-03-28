@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% load recaptcha3 %}
 
 {% block extra_head %}
-    <link rel="icon" href="data:;base64,">
+    {% recaptcha_init %}
+    {% recaptcha_ready action_name='shortening' %}
 {% endblock %}
 
 {% block content %}

@@ -33,7 +33,8 @@ DEFAULT_EVENT_TYPE = 'Z'
 
 HTTP_STATUS_CODE = {
     200: _('OK (200)'),
-    301: _('Redirect (301/302)'),
+    301: _('Redirect (301)'),
+    302: _('Redirect (302)'),
     400: _('Bad Request (400)'),
     403: _('Forbidden (403)'),
     404: _('Not Found (404)'),
@@ -359,6 +360,10 @@ class FactEvent(models.Model):
     )
     event_type = models.CharField(
             max_length=1,
+            null=False
+    )
+    cid = models.CharField(
+            max_length=40,
             null=False
     )
     http_status_code = models.SmallIntegerField(
