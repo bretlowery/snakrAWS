@@ -13,7 +13,9 @@ from snakraws.utils import get_shortening_postback, get_admin_postback, get_jet_
 
 title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
 heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
-extra_context = {'title': title, 'heading': heading}
+sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
+login_extra_context = {'title': title, 'heading': heading, 'sitekey': sitekey, 'action': 'login'}
+logout_extra_context = {'title': title, 'heading': heading}
 
 urlpatterns = [
     re_path(r'^ads.txt$', lambda r: HttpResponse("# no ads just snaks", content_type="text/plain")),
@@ -22,8 +24,8 @@ urlpatterns = [
     re_path(get_jet_dashboard_postback(), include('jet.dashboard.urls', 'jet-dashboard')),
     re_path(get_admin_postback(), admin.site.urls),
     re_path(get_shortening_postback(), views.form_handler, name="form_handler"),
-    re_path(r'^accounts/login/$', LoginView.as_view(template_name='login.html', extra_context=extra_context), name="login"),
-    re_path(r'^accounts/logout/$', LogoutView.as_view(template_name='logout.html', extra_context=extra_context), name="logout"),
+    re_path(r'^accounts/login/$', LoginView.as_view(template_name='login.html', extra_context=login_extra_context), name="login"),
+    re_path(r'^accounts/logout/$', LogoutView.as_view(template_name='logout.html', extra_context=logout_extra_context), name="logout"),
     re_path(r'^accounts/profile/$', lambda r: HttpResponsePermanentRedirect(get_shortening_redirect(), content_type="text/html")),
     re_path(r'^$', lambda r: HttpResponsePermanentRedirect(getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery"), content_type="text/html")),
     re_path(r'^.*$', csrf_exempt(views.request_handler)),

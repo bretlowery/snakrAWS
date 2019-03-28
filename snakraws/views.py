@@ -154,6 +154,7 @@ def form_handler(request, *args, **kwargs):
 
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
+    sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
     submit_label = _("Shorten It")
     return render(
             request,
@@ -164,6 +165,8 @@ def form_handler(request, *args, **kwargs):
                 'heading': heading,
                 'submit_label': submit_label,
                 'message': message,
-                'shorturl': shorturl
+                'shorturl': shorturl,
+                'sitekey': sitekey,
+                'action': 'shorten_url',
             }
     )

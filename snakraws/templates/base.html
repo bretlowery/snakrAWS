@@ -27,6 +27,17 @@
               box-sizing: border-box;
             }
         </style>
+        <script src="https://www.google.com/recaptcha/api.js?render={{ sitekey }}"></script>
+        <script>
+            grecaptcha.ready(function() {
+              grecaptcha.execute('{{ sitekey }}', {action: '{{ action }}'}).then(function(token) {
+                document.querySelectorAll('input.django-recaptcha-hidden-field').forEach(function (value) {
+                    value.value = token;
+                });
+                return token;
+              });
+            });
+        </script>
     </head>
     <body>
         <div class="page-header">

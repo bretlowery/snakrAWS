@@ -1,18 +1,12 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% comment %}
-{% block extra_head %}
-    {% recaptcha_init %}
-    {% recaptcha_ready action_name='login' %}
-{% endblock %}
-{% endcomment %}
-
 {% block content %}
   <h3>{% trans "Login" %}</h3>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">{% trans "Login"%}</button>
+    <input type="hidden" class="django-recaptcha-hidden-field" name="g-recaptcha-response">
   </form>
 {% endblock %}
