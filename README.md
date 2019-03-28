@@ -40,6 +40,7 @@ Negative effects on SEO, CTR, etc.                      | Shortened URLs may not
 - A RDS Postgres 10.6+ database up and running
 - An AWS Security Group set up so that the instance and database can communicate with each other
 - SSH shell access to your instance
+- Google reCAPTCHA v3 public and private keys
 
 ### Installation
 
