@@ -35,6 +35,11 @@ if SITE_MODE == 'dev':
 else:
     SHORTURL_HOST = "your.url.here"
 
+RECAPTCHA_PRIVATE_KEY = 'your Google reCAPTCHA v3 private key here'
+RECAPTCHA_PUBLIC_KEY = 'your Google reCAPTCHA v3 public key here'
+RECAPTCHA_DEFAULT_ACTION = 'generic'
+RECAPTCHA_SCORE_THRESHOLD = 0.5
+
 ALLOWED_HOSTS = [AWS_ELASTIC_IP, 'localhost', '127.0.0.1', '[::1]', ".%s" % SHORTURL_HOST, SHORTURL_HOST]
 
 SHORTENING_POSTBACK = "your-shortening-postback-url-here"

@@ -234,6 +234,9 @@ $ cat /var/log/your.snakraws.com-net-gov-whatever/errors.log
 | INDEX_HTML | The "home page" to return if the user browses to SHORTURL_HOST with no additional path. |
 | JET_DASHBOARD_POSTBACK | Used by django-jet. Don't alter this. |
 | JET_POSTBACK | Used by django-jet. Don't alter this. |
+| RECAPTCHA_PRIVATE_KEY | Your Google reCAPTCHA v3 private key |
+| RECAPTCHA_PUBLIC_KEY | Your Google reCAPTCHA v3 public key |
+| RECAPTCHA_SCORE_THRESHOLD | Specifies the Google reCAPTCHA score below which a user is considered robotic (non-human). Ranges 0.0 = definitely bot to 1.0 = definitely human. OOTB default is 0.5. | 
 | SHORTENING_POSTBACK | The URL path fragment that leads to the web page from which you can shorten URLs. For example, if SHORTURL_HOST is set to "my.site" and SHORTENING_POSTBACK is set to "shorten", the UI form from which to shorten URLs will be located at "http://my.site/shorten". (TBD: If SSL_ENABLED = "True", this will be "https://my.site/shorten". THIS FEATURE IS TBD.) |
 | SHORTURL_HOST | The custom domain (host) to use for your short URLs. Mine is "bret.guru", generating short URLs that look like  http://bret.guru/aBc43d |
 | SHORTURL_PATH_ALPHABET | Specifies the characters allowed in short URLs. These must be URL-safe characters. Defaults to all digits, a-z, and A-Z, except the easily-confused characters "0", "O", "o", "1", and "l". |
