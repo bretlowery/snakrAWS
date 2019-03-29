@@ -6,7 +6,7 @@ import json
 
 from django.template import RequestContext
 from django.shortcuts import render
-from django.http import HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext_lazy as _
 from django.forms.forms import NON_FIELD_ERRORS
 from django.contrib.auth.decorators import login_required
@@ -41,13 +41,16 @@ def get_handler(request):
     #
     # lookup the long url previously used to generate the short url
     #
-    longurl = s.get_long(request)
+    status_code, longurl = s.get_long(request)
     #
     # if found, 302 to it; otherwise, 404
     #
     if longurl:
         if longurl[0]:
-            return HttpResponsePermanentRedirect(longurl[0])
+            if status_code == 301:
+                return HttpResponsePermanentRedirect(longurl[0])
+            elif status_code == 302:
+                return HttpResponseRedirect(longurl[0])
     return Http404
 
 

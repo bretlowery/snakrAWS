@@ -27,6 +27,6 @@
     <br/>
     <br/>
     {% if shorturl %}
-        <span class="alert alert-info"><strong>Short URL:&nbsp</strong>{{ shorturl }}</span>
+        <span class="alert alert-info"><strong>Short URL:&nbsp</strong><a href="{{ shorturl }}">{{ shorturl }}</a></span>
     {% endif %}
 {% endblock %}

@@ -11,6 +11,7 @@ from urllib.parse import quote
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.http import Http404, HttpResponseServerError
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import ugettext_lazy as _
 
 from pythonjsonlogger import jsonlogger
 
@@ -161,28 +162,29 @@ class SnakrLogger(Exception):
             if status_code != 0:
                 status = switch(status_code)
                 if self.enable_ga:
-                    if "country_code" in ipobj.geodict:
-                        cc = ipobj.geodict["country_code"]
-                    elif "countrycode" in ipobj.geodict:
-                        cc = ipobj.geodict["countrycode"]
-                    else:
-                        cc = ""
+                    nada = _("none")
+                    cc = nada
+                    if ipobj:
+                        if "country_code" in ipobj.geodict:
+                            cc = ipobj.geodict["country_code"]
+                        elif "countrycode" in ipobj.geodict:
+                            cc = ipobj.geodict["countrycode"]
                     gad = {
                         'v':        1,
                         'tid':      self.ga_tid,
                         'ds':       'web',
                         't':        HTTP_STATUS_CODE[abs(status_code)],
                         'cid':      self.cid,
-                        'uip':      ipobj.ip,
-                        'ua':       quote(useragent),
+                        'uip':      ipobj.ip if ipobj else nada,
+                        'ua':       quote(useragent) if useragent else nada,
                         'geoid':    cc,
-                        'dr':       quote(referer),
-                        'dl':       quote(shorturl.shorturl),
-                        'cd1':      'Snakr Long URL',
-                        'cm1':      quote(longurl.longurl),
-                        'cd2':      'Snakr Short URL',
-                        'cm2':      quote(shorturl.shorturl),
-                        'cd3':      'Snakr Status',
+                        'dr':       quote(referer) if referer else nada,
+                        'dl':       quote(shorturl.shorturl) if shorturl else quote(value) if value else nada,
+                        'cd1':      _('Snakr Long URL'),
+                        'cm1':      quote(longurl.longurl) if longurl else nada,
+                        'cd2':      _('Snakr Short URL'),
+                        'cm2':      quote(shorturl.shorturl) if shorturl else quote(value) if value else nada,
+                        'cd3':      _('Snakr Status'),
                         'cm3':      msg
                     }
                     try:

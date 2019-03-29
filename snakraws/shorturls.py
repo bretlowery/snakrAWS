@@ -180,20 +180,22 @@ class ShortURL:
                                  status_code=404)
         longurl = get_decodedurl(l.longurl)
         #
-        # Log that a 301 request to the matching long url is about to occur
+        # Log that a 301/302 request to the matching long url is about to occur
         #
+        redirect_status_code = getattr(settings, "SHORTURL_REDIRECT_STATUS_CODE", 302)
+        redirect_status_code = 301 if redirect_status_code != 302 else 302
         msg = self.event.log(
                 request=request,
                 event_type='S',
-                messagekey='HTTP_301',
+                messagekey='HTTP_%d' % redirect_status_code,
                 value=longurl,
                 longurl=l,
                 shorturl=s,
-                status_code=301
+                status_code=redirect_status_code
         )
         #
         # Return the longurl
         #
-        return longurl, msg
+        return redirect_status_code, longurl
 
 
