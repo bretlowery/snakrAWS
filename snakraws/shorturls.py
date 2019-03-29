@@ -196,6 +196,6 @@ class ShortURL:
         #
         # Return the longurl
         #
-        return redirect_status_code, longurl
+        return longurl, msg, redirect_status_code
 
 

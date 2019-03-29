@@ -41,16 +41,15 @@ def get_handler(request):
     #
     # lookup the long url previously used to generate the short url
     #
-    status_code, longurl = s.get_long(request)
+    longurl, msg, redirect_status_code = s.get_long(request)
     #
     # if found, 302 to it; otherwise, 404
     #
     if longurl:
-        if longurl[0]:
-            if status_code == 301:
-                return HttpResponsePermanentRedirect(longurl[0])
-            elif status_code == 302:
-                return HttpResponseRedirect(longurl[0])
+        if redirect_status_code == 301:
+            return HttpResponsePermanentRedirect(longurl)
+        elif redirect_status_code == 302:
+            return HttpResponseRedirect(longurl)
     return Http404
 
 
