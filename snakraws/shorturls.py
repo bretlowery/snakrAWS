@@ -23,7 +23,7 @@ class ShortURL:
                     request=request,
                     event_type='B',
                     messagekey='ROBOT',
-                    value='Known Bot {%}' % bot_name,
+                    value='Known Bot %s' % bot_name,
                     status_code=-403)
         try:
             self.host = get_host(request, False)

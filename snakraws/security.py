@@ -10,10 +10,6 @@ from snakraws.models import Blacklist
 
 
 def get_useragent_or_403_if_bot(request):
-    #
-    # at scale, this should be multithreaded/multi-processed in parallel
-    # or implemented as a set of microservice lookups to a separate memcached lookup service
-    #
     bot_name = None
     lc_http_useragent = get_useragent(request, True)
     botlist = cache.get('botlist')
