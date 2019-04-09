@@ -187,8 +187,9 @@ LANGUAGE_ADDENDUM = _(' or contains language flagged as inappropriate')
 USER_AGENT = "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) " \
              "(if u can read this, someone resolved a URL to you using me)"
 
+BOTWHITELIST = ['LinkedInBot/1.0 (compatible; Mozilla/5.0; Apache-HttpClient +http://www.linkedin.com)', ]
 
-BADBOTLIST = ['1job', 'abot', 'agentname', 'apachebench', 'aport', 'applesyndication', 'ask jeeves', 'ask+jeeves',
+BOTBLACKLIST = ['1job', 'abot', 'agentname', 'apachebench', 'aport', 'applesyndication', 'ask jeeves', 'ask+jeeves',
         'atomz', 'avantgo', 'baiduspider', 'blitzbot', 'bloglines', 'bordermanager', 'changedetection',
         'check_http', 'checkurl', 'chkd', 'contype', 'cosmos', 'download ninja', 'download+ninja', 'dts agent',
         'dts+agent', 'favorg', 'flashget', 'frontier', 'getright', 'golem', 'gomezagent', 'googlebot', 'grabber',
@@ -246,6 +247,7 @@ RESERVED_PATHS = [
     _('ads'),
     _('image'),
     'localhost',
+    'api',
     SHORTENING_POSTBACK,
     ADMIN_POSTBACK,
     JET_POSTBACK,
