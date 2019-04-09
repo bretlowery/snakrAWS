@@ -11,16 +11,29 @@ from snakraws.models import Blacklist
 
 def get_useragent_or_403_if_bot(request):
     bot_name = None
-    lc_http_useragent = get_useragent(request, True)
-    botlist = cache.get('botlist')
-    if not botlist:
-        botlist = settings.BADBOTLIST
-        cache.set('botlist', botlist)
-    if botlist:
-        for match in botlist:
-            if match in lc_http_useragent:
-                bot_name = match
-                break
+    enabled = getattr(settings, "ENABLE_BOT_DETECTION", True)
+    if enabled:
+        lc_http_useragent = get_useragent(request, True)
+        botblacklist = cache.get('botblacklist')
+        if not botblacklist:
+            botblacklist = settings.BOTBLACKLIST
+            cache.set('botblacklist', botblacklist)
+        botwhitelist = cache.get('botwhitelist')
+        if not botwhitelist:
+            botwhitelist = settings.BOTWHITELIST
+            cache.set('botwhitelist', botwhitelist)
+        whitelisted = False
+        if botwhitelist:
+            for match in botwhitelist:
+                if match in lc_http_useragent:
+                    whitelisted = True
+                    break
+        if not whitelisted:
+            if botblacklist:
+                for match in botblacklist:
+                    if match in lc_http_useragent:
+                        bot_name = match
+                        break
     return bot_name, get_useragent(request, False)
 
 
