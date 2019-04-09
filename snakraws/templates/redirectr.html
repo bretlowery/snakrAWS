@@ -16,14 +16,15 @@
       gtag('js', new Date());
       gtag('config', 'UA-3767544-3');
       gtag('event', 'redirect', {
-        'event_category': 'outbound',
-        'event_label': '{{ shorturl|get_netloc }}',
+        'event_category': '{{ shorturl|get_netloc }}',
+        'event_action': 'redirect',
+        'event_label': '{{ shorturl|get_path }}',
         'value': '{{ shorturl|get_path }}'
       });
     </script>
     {% endif %}
-    <!-- <meta http-equiv="refresh" content="{% if status_code == 302 %}2{% else %}0{% endif %}; url={{ longurl }}"> -->
-    <meta http-equiv="refresh" content="0; url={{ longurl }}">
+    <!-- <meta http-equiv="refresh" content="{% if status_code == 302 %}2{% else %}1{% endif %}; url={{ longurl }}"> -->
+    <meta http-equiv="refresh" content="{% if status_code == 302 %}1{% else %}0{% endif %}; url={{ longurl }}">
 </head>
 <body>
     {% if image_url or inpage %}
