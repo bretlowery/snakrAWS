@@ -4,7 +4,7 @@ SnakrAWS URL Configuration
 
 from django.contrib import admin
 from django.http import HttpResponse, HttpResponsePermanentRedirect
-from django.urls import re_path, include, path
+from django.urls import re_path, include
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.views import LoginView, LogoutView
 
@@ -18,6 +18,7 @@ login_extra_context = {'title': title, 'heading': heading, 'sitekey': sitekey, '
 logout_extra_context = {'title': title, 'heading': heading}
 
 urlpatterns = [
+    re_path(r'^$', lambda r: HttpResponsePermanentRedirect(getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery"), content_type="text/html")),
     re_path(r'^ads.txt$', lambda r: HttpResponse("# no ads just snaks", content_type="text/plain")),
     re_path(r'^robots.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     re_path(get_jet_postback(), include('jet.urls', 'jet')),
@@ -27,6 +28,7 @@ urlpatterns = [
     re_path(r'^accounts/login/$', LoginView.as_view(template_name='login.html', extra_context=login_extra_context), name="login"),
     re_path(r'^accounts/logout/$', LogoutView.as_view(template_name='logout.html', extra_context=logout_extra_context), name="logout"),
     re_path(r'^accounts/profile/$', lambda r: HttpResponsePermanentRedirect(get_shortening_redirect(), content_type="text/html")),
-    re_path(r'^$', lambda r: HttpResponsePermanentRedirect(getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery"), content_type="text/html")),
+    re_path(r'^api/$', csrf_exempt(views.api_handler), name="api_handler"),
+    re_path(r'^api$', csrf_exempt(views.api_handler), name="api_handler"),
     re_path(r'^.*$', csrf_exempt(views.request_handler)),
 ]

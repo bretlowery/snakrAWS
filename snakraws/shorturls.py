@@ -179,6 +179,9 @@ class ShortURL:
                                  shorturl=s,
                                  status_code=404)
         longurl = get_decodedurl(l.longurl)
+        title = l.title
+        description = l.description
+        image_url = l.image_url
         #
         # Log that a 301/302 request to the matching long url is about to occur
         #
@@ -196,6 +199,6 @@ class ShortURL:
         #
         # Return the longurl
         #
-        return longurl, msg, redirect_status_code
+        return longurl, msg, redirect_status_code, title, description, image_url
 
 

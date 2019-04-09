@@ -1,0 +1,46 @@
+{% load filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- {{ public_name }} {{ version }} -->
+    <meta charset="UTF-8">
+    {% if longurl_title and longurl_title.strip %}<meta content="{{ longurl_title }}" property="og:title" />{% endif %}
+    {% if longurl_description and longurl_description.strip %}<meta content="{{ longurl_description }}" property="og:description" />{% endif %}
+    {% if longurl_title and longurl_title.strip %}<title>{{ longurl_title }}</title>{% endif %}
+    {% if ga_enabled %}
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3767544-3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-3767544-3');
+      gtag('event', 'redirect', {
+        'event_category': 'outbound',
+        'event_label': '{{ shorturl|get_netloc }}',
+        'value': '{{ shorturl|get_path }}'
+      });
+    </script>
+    {% endif %}
+    <!-- <meta http-equiv="refresh" content="{% if status_code == 302 %}2{% else %}0{% endif %}; url={{ longurl }}"> -->
+    <meta http-equiv="refresh" content="0; url={{ longurl }}">
+</head>
+<body>
+    {% if image_url or inpage %}
+    <table border="0">
+        <tr>
+            {% if image_url and image_url.strip %}
+            <td width="50%">
+                <img src="{{ image_url }}" height="1" width="1">
+            </td>
+            {% endif %}
+            {% if inpage and inpage.strip %}
+            <td width="50%">
+                <font style="color: #FFFFFF;">{{ inpage }}</font>
+            </td>
+            {% endif %}
+        </tr>
+    </table>
+    {% endif %}
+</body>
+</html>

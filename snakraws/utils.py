@@ -9,6 +9,7 @@ import mimetypes
 from urllib.request import Request, urlopen
 from urllib.parse import urlparse, quote, unquote
 from string import digits
+import requests
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -19,6 +20,8 @@ from profanity_filter import ProfanityFilter
 
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
+
+from bs4 import BeautifulSoup
 
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
 # See http://www.isthe.com/chongo/tech/comp/fnv/index.html for math-y details.
@@ -249,21 +252,53 @@ def get_shortpathcandidate(**kwargs):
     return shortpath
 
 
-def site_exists(url):
-    rep = None
-    ua = getattr(settings, "USER_AGENT",
-                 "SnakrAWS/1.0 (URL Shortening and Analytics Service) (http://www.github.com/bretlowery) "
-                 "(if u can read this, someone resolved a URL to you using me)")
-    req = Request(url)
-    req.add_header("User-Agent", ua)
+def get_wsgirequest_headers(request):
+    headers = {}
+    if request:
+        regex = re.compile('^HTTP_')
+        headers = dict((regex.sub('', header).replace("_", "-"), value)
+                       for (header, value) in request.META.items()
+                       if header.startswith('HTTP_') and header != 'HTTP_HOST')
+    return headers
+
+
+def get_opengraph_meta(url, request):
+    target = None
     try:
-        rep = urlopen(req)
+        target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
     except:
         pass
-    if rep:
-        if rep.getcode() == 200:
-            return True
-    return False
+    title = ""
+    description = ""
+    image_url = ""
+    if target:
+        if target.status_code == 200:
+            try:
+                soup = BeautifulSoup(target.content, "html.parser")
+            except:
+                soup = None
+                pass
+            if soup:
+                og_title = soup.find("meta", property="og:title")
+                if og_title:
+                    title = og_title.attrs["content"]
+                else:
+                    try:
+                        title = soup.title.string
+                    except:
+                        title = ""
+                        pass
+                og_description = soup.find("meta", property="og:description")
+                if og_description:
+                    description = og_description.attrs["content"]
+                else:
+                    description = ""
+                og_image_url = soup.find("meta", property="og:image")
+                if og_image_url:
+                    image_url = og_image_url.attrs["content"]
+                else:
+                    image_url = ""
+    return title, description, image_url
 
 
 def is_shortpath_valid(shortpath):
@@ -440,5 +475,4 @@ def is_profane(url):
                     return True
 
     return False
-
 

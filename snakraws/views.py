@@ -6,7 +6,7 @@ import json
 
 from django.template import RequestContext
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
 from django.forms.forms import NON_FIELD_ERRORS
 from django.contrib.auth.decorators import login_required
@@ -16,7 +16,8 @@ from snakraws.shorturls import ShortURL
 from snakraws.longurls import LongURL
 from snakraws.parsers import Parsers
 from snakraws.forms import ShortForm
-from snakraws.utils import get_message
+from snakraws.utils import get_message, get_json
+from snakraws.__init__ import VERSION
 
 
 def homepage(request, template_name="homepage.html"):
@@ -41,15 +42,33 @@ def get_handler(request):
     #
     # lookup the long url previously used to generate the short url
     #
-    longurl, msg, redirect_status_code = s.get_long(request)
+    longurl, msg, redirect_status_code, title, description, image_url = s.get_long(request)
     #
     # if found, 302 to it; otherwise, 404
     #
     if longurl:
-        if redirect_status_code == 301:
-            return HttpResponsePermanentRedirect(longurl)
-        elif redirect_status_code == 302:
-            return HttpResponseRedirect(longurl)
+        public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
+        public_version = VERSION
+        ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
+        inpage = description
+        image_url = ""  # TBD
+        return render(
+                request,
+                'redirectr.html',
+                {
+                    'ga_enabled': ga_enabled,
+                    'image_url': image_url,
+                    'inpage': inpage,
+                    'longurl': longurl,
+                    'longurl_title': title,
+                    'longurl_description': description,
+                    'shorturl': s.normalized_shorturl,
+                    'status_code': redirect_status_code,
+                    'verbose_name': public_name,
+                    'version': public_version,
+                }
+        )
+
     return Http404
 
 
@@ -62,22 +81,10 @@ def post_handler(request, **kwargs):
             lu = form.cleaned_data["longurl"]
         if "vanityurl" in form.cleaned_data:
             vp = form.cleaned_data["vanityurl"]
+    elif getattr(settings, 'SITE_MODE', 'prod') != 'dev':
+        # disabling api for security reasons until OAuth is implemented for it
+        return HttpResponseForbidden(_("Invalid Request"))
 
-    #
-    # Restrict new short url creation to admins
-    # Outside offworlders will get a 404 on POST
-    #
-    # user = users.get_current_user()
-    # # raise SuspiciousOperation(str(user))
-    # if user:
-    #     if not users.is_current_user_admin():
-    #         raise Http404
-    # else:
-    #     raise Http404
-    #
-    # check for unfriendly bot first
-    #
-    #self._botdetector.get_useragent_or_403_if_bot(request)
     #
     # create an instance of the LongURLs object, validate the long URL, and if successful load the LongURLs instance with it
     #
@@ -157,7 +164,8 @@ def form_handler(request, *args, **kwargs):
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
-    submit_label = _("Shorten It")
+    submit_label        = _("       Just Shorten It      ")
+    post2linkedin_label = _("Shorten And Post On LinkedIn")
     return render(
             request,
             'shorten_url.html',
@@ -166,9 +174,17 @@ def form_handler(request, *args, **kwargs):
                 'title': title,
                 'heading': heading,
                 'submit_label': submit_label,
+                'post2linkedin_label': post2linkedin_label,
                 'message': message,
                 'shorturl': shorturl,
                 'sitekey': sitekey,
                 'action': 'shorten_url',
             }
     )
+
+
+def api_handler(request):
+    if request.method == "POST":
+        if get_json(request, 'lu'):
+            return post_handler(request)
+    return HttpResponseForbidden(_("Invalid Request"))

@@ -299,6 +299,19 @@ class LongURLs(models.Model):
             null=False)
     is_active = models.BooleanField(
             null=False)
+    title = models.CharField(
+            max_length=1024,
+            null=False,
+            blank=True)
+    description = models.CharField(
+            max_length=4096,
+            null=False,
+            blank=True)
+    image_url = models.CharField(
+            max_length=4096,
+            validators=[URLValidator()],
+            null=True,
+            blank=False)
 
     class Meta:
         app_label = TABLE_PREFIX

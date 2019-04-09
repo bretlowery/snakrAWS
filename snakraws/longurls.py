@@ -14,7 +14,7 @@ from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
-    get_longurlhash, get_host, get_referer, is_profane
+    get_longurlhash, get_host, get_referer, is_profane, get_opengraph_meta
 from snakraws.ips import SnakrIP
 
 
@@ -43,14 +43,14 @@ class LongURL:
         if self.ip.is_error:
             raise self.event.log(messagekey='IP_LOOKUP_INVALID', status_code=400, request=None, message=self.ip.errors)
 
-        lurl = get_json(request, 'u') or lu
+        lurl = get_json(request, 'lu') or lu
         if not lurl:
             raise self.event.log(messagekey='LONG_URL_MISSING', status_code=400)
 
         if not is_url_valid(lurl):
             raise self.event.log(messagekey='LONG_URL_INVALID', value=lurl, status_code=400)
 
-        self.vanity_path = get_json(request, 'v') or vp
+        self.vanity_path = get_json(request, 'vp') or vp
 
         image_url = get_json(request, 'i')
         if is_image(image_url):
@@ -70,6 +70,9 @@ class LongURL:
         self.longurl = lurl
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
+        self.title = ""
+        self.description = ""
+        self.image_url = ""
         return
 
     # get or make_short the short URL for an instance of this long URL
@@ -125,8 +128,13 @@ class LongURL:
                 #                 messagekey='LONG_URL_CONTENT_INVALID',
                 #                 value=self.normalized_longurl,
                 #                 status_code=400)
+
             #
-            # 3. Create a LongURLs persistence object
+            # 3. Extract the longurl target's title and og:description, if gettable
+            #
+            self.title, self.description, self.image_url = get_opengraph_meta(self.normalized_longurl, request)
+            #
+            # 4. Create a LongURLs persistence object
             #
             if self.longurl_is_preencoded:
                 originally_encoded = True
@@ -135,17 +143,20 @@ class LongURL:
             dl = LongURLs(hash=self.hash,
                           longurl=self.normalized_longurl,
                           originally_encoded=originally_encoded,
+                          title=self.title,
+                          description=self.description,
+                          image_url=self.image_url,
                           is_active=True
                           )
             dl.save()
             #
-            # 4. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
+            # 5. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
             #
             s = ShortURL(request)
             s.make_short(self.normalized_longurl_scheme, self.vanity_path)
             compression_ratio = float(len(s.shorturl)) / float(len(self.normalized_longurl))
             #
-            # 5. Create a matching ShortURLs persistence object
+            # 6. Create a matching ShortURLs persistence object
             #
             ds = ShortURLs(hash=s.hash,
                            longurl_id=dl.id,
@@ -155,23 +166,23 @@ class LongURL:
                            is_active=True
                            )
             #
-            # 6. Is there an associated image? If so, download it to static,
+            # 7. Is there an associated image? If so, download it to static,
             #
             # if self.linked_image:
             #    ft = file
             #
-            # 7. Persist everything
+            # 8. Persist everything
             #
             ds.save()
             msg = self.event.log(request=request,
-                           ipobj=self.ip,
-                           event_type='L',
-                           messagekey='LONG_URL_SUBMITTED',
-                           value=self.normalized_longurl,
-                           longurl=dl,
-                           shorturl=ds,
-                           status_code=200
-                           )
+                                 ipobj=self.ip,
+                                 event_type='L',
+                                 messagekey='LONG_URL_SUBMITTED',
+                                 value=self.normalized_longurl,
+                                 longurl=dl,
+                                 shorturl=ds,
+                                 status_code=200
+                                 )
             #
             # 8. Return the short url
             #
