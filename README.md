@@ -97,7 +97,7 @@ https://www.digitalocean.com/community/tutorials/how-to-serve-django-application
 ```
 sudo vim /etc/nginx/conf.d/your.snakraws.com-net-gov-whatever.conf
 ```
-    Conf file:
+Conf file:
 ```
 server {
     listen             80;
@@ -166,11 +166,11 @@ server {
                                      
 }
 ```
-11. Test that conf before you deploy with:
+11. Test that conf before you deploy 'cause it's just the right thing to do:
 ```
 $ sudo nginx -t
 ```
-12. If it's ok, start nginx with:
+12. If you're Chloraseptic copasetic, start nginx with:
 ```
 $ sudo service nginx start
 ```
