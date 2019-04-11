@@ -6,7 +6,6 @@ import re
 import random
 import json
 import mimetypes
-from urllib.request import Request, urlopen
 from urllib.parse import urlparse, quote, unquote
 from string import digits
 import requests
@@ -21,7 +20,9 @@ from profanity_filter import ProfanityFilter
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Doctype as BS4Doctype
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
 # See http://www.isthe.com/chongo/tech/comp/fnv/index.html for math-y details.
@@ -262,7 +263,60 @@ def get_wsgirequest_headers(request):
     return headers
 
 
-def get_opengraph_meta(url, request):
+def get_target_meta(url, request):
+
+    def _get_html_title(soupobj):
+        val = ""
+        og_title = soupobj.find("meta", property="og:title")
+        if og_title:
+            val = og_title.attrs["content"]
+        else:
+            try:
+                val = soupobj.title.string
+            except:
+                pass
+        return val
+
+    def _get_html_description(soupobj):
+        val = ""
+        og_description = soupobj.find("meta", property="og:description")
+        if og_description:
+            val = og_description.attrs["content"]
+        return val
+
+    def _get_image_url(soupobj):
+        val = ""
+        og_image_url = soupobj.find("meta", property="og:image")
+        if og_image_url:
+            val = og_image_url.attrs["content"]
+            if val:
+                if is_url_valid(val):
+                    parts = urlparts(val)
+                    if parts:
+                        if 'http' not in parts.scheme.lower():
+                            val = ""
+        return val
+
+    def _get_pdf_title(document):
+        val = ""
+        try:
+            p = PDFParser(document)
+            d = PDFDocument(p)
+            val = d.info["title"]
+        except:
+            pass
+        return val
+
+    def _fetch_doctype(url):
+        mime_type = mimetypes.guess_type(url, strict=True)[0]
+        if mime_type:
+            def mt(x):
+                return {
+                    'text/html': 'html',
+                    'application/pdf': 'pdf',
+                    }.get(x, None)
+            return mt(mime_type)
+
     target = None
     try:
         target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
@@ -273,31 +327,22 @@ def get_opengraph_meta(url, request):
     image_url = ""
     if target:
         if target.status_code == 200:
+            content = target.content
+            doctype = None
             try:
-                soup = BeautifulSoup(target.content, "html.parser")
+                soup = BeautifulSoup(content, "lxml")
+                items = [item for item in soup.contents if isinstance(item, BS4Doctype)]
+                doctype = items[0] if items else None
             except:
                 soup = None
                 pass
-            if soup:
-                og_title = soup.find("meta", property="og:title")
-                if og_title:
-                    title = og_title.attrs["content"]
-                else:
-                    try:
-                        title = soup.title.string
-                    except:
-                        title = ""
-                        pass
-                og_description = soup.find("meta", property="og:description")
-                if og_description:
-                    description = og_description.attrs["content"]
-                else:
-                    description = ""
-                og_image_url = soup.find("meta", property="og:image")
-                if og_image_url:
-                    image_url = og_image_url.attrs["content"]
-                else:
-                    image_url = ""
+            if soup and doctype == 'html':
+                title = _get_html_title(soup)
+                description = _get_html_description(soup)
+                image_url = _get_image_url(soup)
+            elif doctype == "pdf":
+                title = _get_pdf_title(content)
+
     return title, description, image_url
 
 
@@ -311,8 +356,7 @@ def is_shortpath_valid(shortpath):
     return True
 
 
-def is_url_valid(myurl):
-    test = myurl
+def is_url_valid(test):
     is_valid = False
     try:
         # 2-21-2019 bml workaround for current bug in validator-collection v1.3.2 (reported as issue #28)
