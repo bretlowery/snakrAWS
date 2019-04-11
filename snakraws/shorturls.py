@@ -183,22 +183,20 @@ class ShortURL:
         description = l.description
         image_url = l.image_url
         #
-        # Log that a 301/302 request to the matching long url is about to occur
+        # Log that a permanent redirect response to the matching long url is about to occur
         #
-        redirect_status_code = getattr(settings, "SHORTURL_REDIRECT_STATUS_CODE", 302)
-        redirect_status_code = 301 if redirect_status_code != 302 else 302
         msg = self.event.log(
                 request=request,
                 event_type='S',
-                messagekey='HTTP_%d' % redirect_status_code,
+                messagekey='HTTP_301',
                 value=longurl,
                 longurl=l,
                 shorturl=s,
-                status_code=redirect_status_code
+                status_code=301
         )
         #
         # Return the longurl
         #
-        return longurl, msg, redirect_status_code, title, description, image_url
+        return longurl, msg, 301, title, description, image_url
 
 

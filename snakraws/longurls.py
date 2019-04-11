@@ -14,7 +14,7 @@ from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
-    get_longurlhash, get_host, get_referer, is_profane, get_opengraph_meta
+    get_longurlhash, get_host, get_referer, is_profane, get_target_meta
 from snakraws.ips import SnakrIP
 
 
@@ -52,12 +52,6 @@ class LongURL:
 
         self.vanity_path = get_json(request, 'vp') or vp
 
-        image_url = get_json(request, 'i')
-        if is_image(image_url):
-            self.linked_image = image_url
-        else:
-            self.linked_image = None
-
         if lurl == get_decodedurl(lurl):
             preencoded = False
             self.normalized_longurl = get_encodedurl(lurl)
@@ -70,9 +64,8 @@ class LongURL:
         self.longurl = lurl
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
-        self.title = ""
-        self.description = ""
-        self.image_url = ""
+        self.title, self.description, self.image_url = get_target_meta(self.normalized_longurl, request)
+
         return
 
     # get or make_short the short URL for an instance of this long URL
@@ -130,11 +123,7 @@ class LongURL:
                 #                 status_code=400)
 
             #
-            # 3. Extract the longurl target's title and og:description, if gettable
-            #
-            self.title, self.description, self.image_url = get_opengraph_meta(self.normalized_longurl, request)
-            #
-            # 4. Create a LongURLs persistence object
+            # 3. Create a LongURLs persistence object
             #
             if self.longurl_is_preencoded:
                 originally_encoded = True
@@ -150,13 +139,13 @@ class LongURL:
                           )
             dl.save()
             #
-            # 5. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
+            # 4. Generate a short url for it (with collision handling) and calc its compression ratio vs the long url
             #
             s = ShortURL(request)
             s.make_short(self.normalized_longurl_scheme, self.vanity_path)
             compression_ratio = float(len(s.shorturl)) / float(len(self.normalized_longurl))
             #
-            # 6. Create a matching ShortURLs persistence object
+            # 5. Create a matching ShortURLs persistence object
             #
             ds = ShortURLs(hash=s.hash,
                            longurl_id=dl.id,
@@ -166,12 +155,12 @@ class LongURL:
                            is_active=True
                            )
             #
-            # 7. Is there an associated image? If so, download it to static,
+            # 6. Is there an associated image? If so, download it to static,
             #
             # if self.linked_image:
             #    ft = file
             #
-            # 8. Persist everything
+            # 7. Persist everything
             #
             ds.save()
             msg = self.event.log(request=request,

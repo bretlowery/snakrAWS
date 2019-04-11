@@ -6,7 +6,7 @@ import json
 
 from django.template import RequestContext
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
 from django.forms.forms import NON_FIELD_ERRORS
 from django.contrib.auth.decorators import login_required
@@ -14,7 +14,6 @@ from django.contrib.auth.decorators import login_required
 from snakraws import settings
 from snakraws.shorturls import ShortURL
 from snakraws.longurls import LongURL
-from snakraws.parsers import Parsers
 from snakraws.forms import ShortForm
 from snakraws.utils import get_message, get_json
 from snakraws.__init__ import VERSION
@@ -44,21 +43,19 @@ def get_handler(request):
     #
     longurl, msg, redirect_status_code, title, description, image_url = s.get_long(request)
     #
-    # if found, 302 to it; otherwise, 404
+    # if found, redirect to it; otherwise, 404
     #
     if longurl:
         public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
         public_version = VERSION
         ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
-        inpage = description
-        image_url = ""  # TBD
         return render(
                 request,
                 'redirectr.html',
                 {
                     'ga_enabled': ga_enabled,
                     'image_url': image_url,
-                    'inpage': inpage,
+                    'inpage': description,
                     'longurl': longurl,
                     'longurl_title': title,
                     'longurl_description': description,
@@ -84,7 +81,6 @@ def post_handler(request, **kwargs):
     elif getattr(settings, 'SITE_MODE', 'prod') != 'dev':
         # disabling api for security reasons until OAuth is implemented for it
         return HttpResponseForbidden(_("Invalid Request"))
-
     #
     # create an instance of the LongURLs object, validate the long URL, and if successful load the LongURLs instance with it
     #
@@ -99,24 +95,19 @@ def post_handler(request, **kwargs):
     #
     response_data = {}
     #
-    # get document title if possible
-    #
-    p = Parsers()
-    title = p.get_title(l.longurl)
-    #
     # make response data
     #
     response_data['message'] = msg
     response_data['shorturl'] = shorturl
-    response_data['title'] = title
-    if title:
+    response_data['title'] = l.title
+    if l.title:
         ls = len(shorturl)
-        lt = len(title)
-        ltmax = 140 - ls - 1
+        lt = len(l.title)
+        ltmax = 280 - ls - 1
         if lt > ltmax:
-            socialmediapost = title[:ltmax - 3] + '... ' + shorturl
+            socialmediapost = l.title[:ltmax - 3] + '... ' + shorturl
         else:
-            socialmediapost = title + ' ' + shorturl
+            socialmediapost = l.title + ' ' + shorturl
         response_data['socialmediapost'] = socialmediapost
     #
     #
@@ -164,8 +155,8 @@ def form_handler(request, *args, **kwargs):
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
-    submit_label        = _("       Just Shorten It      ")
-    post2linkedin_label = _("Shorten And Post On LinkedIn")
+    submit_label        = _("Just Shorten It")
+    post2linkedin_label = _("Shorten Then Post On LinkedIn")
     return render(
             request,
             'shorten_url.html',

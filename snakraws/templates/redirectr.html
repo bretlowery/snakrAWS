@@ -24,10 +24,26 @@
       });
     </script>
     {% endif %}
-    <!-- <meta http-equiv="refresh" content="{% if status_code == 302 %}2{% else %}1{% endif %}; url={{ longurl }}"> -->
-    <meta http-equiv="refresh" content="0; url={{ longurl }}">
+    <script type="text/javascript">
+        var cachebuster = Math.round(new Date().getTime() / 1000);
+        document.write('<scr'+'ipt type="text/javascript" src="external.js?cb=' +cachebuster+'"></scr' + 'ipt>');
+    </script>
+    {% comment %}
+    The 1-second delay in the following meta refresh tag is necessary for LinkedInBot and other socmed posting bots to
+    agree to load the og tags. A 0 tells the bot that this is a temporary not a permanent redirect, and they won't bother
+    to load and render the og tags in the post. You can test shorturl resolution on LinkedIn and see what the post will look
+    like before you actully post it by using LinkedIn's Post Inspector at https://www.linkedin.com/post-inspector/inspect/ .
+    {% endcomment %}
+    <meta http-equiv="refresh" content="1; url={{ longurl }}">
+    <style>
+        body {background-color: #FFFFFF;}
+    </style>
 </head>
 <body>
+    {% comment %}
+    Here, we embed the og values into page elements to ensure the LinkedInBot etc consider the redirect page a "valid" page.
+    We intend no malfeasance -- we're just shortening URLs after all. This increases our quality score with the site to ensure that.
+    {% endcomment %}
     {% if image_url or inpage %}
     <table border="0">
         <tr>
@@ -38,7 +54,10 @@
             {% endif %}
             {% if inpage and inpage.strip %}
             <td width="50%">
-                <font style="color: #FFFFFF;">{{ inpage }}</font>
+                <font style="color: #FFFFFF;">
+                    {{ inpage }}<br/>
+                    {{ cachebuster }}
+                </font>
             </td>
             {% endif %}
         </tr>

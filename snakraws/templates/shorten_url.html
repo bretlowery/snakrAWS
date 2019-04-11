@@ -9,17 +9,22 @@
 {% block content %}
     <form method="POST" class="post-form">{% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="save btn btn-default">&nbsp;{{ submit_label }}&nbsp;</button>
+        <div class="btn-group">
+            <button name="just_shorten_it" type="submit" class="save btn btn-default">&nbsp;{{ submit_label }}&nbsp;</button>&nbsp;&nbsp;
+            <button name="post2linkedin"   type="submit" class="save btn btn-default">&nbsp;{{ post2linkedin_label }}&nbsp;</button>
+        </div>
     </form>
     {% if message %}
         <br/>
         <br/>
-    {% if '200 ' in message %}
-        <span class="alert alert-success">
-    {% else %}
-        <span class="alert alert-danger">
-    {% endif %}
-            <strong>Result:&nbsp;</strong>{{ message }}
+        <span class="text-nowrap">
+        {% if '200 ' in message %}
+            <span class="alert alert-success" >
+        {% else %}
+            <span class="alert alert-danger">
+        {% endif %}
+                <strong>Result:&nbsp;</strong>{{ message }}
+            </span>
         </span>
     {% endif %}
     <br/>

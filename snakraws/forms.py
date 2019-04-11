@@ -35,8 +35,7 @@ class ShortForm(forms.ModelForm):
     def clean_vanityurl(self):
         vu = self.cleaned_data['vanityurl'].strip()
         if len(vu) > 0:
-            min_len = getattr(settings, "SHORTURL_PATH_SIZE", 6)
-            if len(vu) < min_len or not re.match(r'[\w-]*$', vu):
+            if len(vu) < 3 or not re.match(r'[\w-]*$', vu):
                 msg = get_message("VANITY_PATH_INVALID")
-                raise ValidationError(msg % (vu, min_len))
+                raise ValidationError(msg % (vu, 3))
         return vu

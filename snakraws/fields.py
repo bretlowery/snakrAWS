@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import SuspiciousOperation
 
+from snakraws import settings
 from snakraws.settings import CANONICAL_MESSAGES
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,8 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
         logger.debug("Response from reCaptcha server: %s", json_response)
         if bool(json_response['success']):
             if self._score_threshold is not None and self._score_threshold > json_response['score']:
+                raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
+            if getattr(settings, "TEST_LOW_CAPTCHA_SCORE", False):
                 raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
             return values[0]
         else:
