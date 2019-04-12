@@ -44,3 +44,4 @@ ERROR_CODE_EXCEPTION_MAPPING = {
 
 def get_exception_for_error_code(error_code):
     return ERROR_CODE_EXCEPTION_MAPPING.get(error_code, LinkedInError)
+

@@ -318,7 +318,7 @@ def get_target_meta(url, request):
                 'application/pdf': 'pdf',
                 'text/plain': 'text',
                 }.get(x, None)
-        
+
         if 'content-type' in targetdoc.headers:
             dt = __mt(targetdoc.headers['content-type'])
         return dt
@@ -531,4 +531,3 @@ def is_profane(url):
                     return True
 
     return False
-
