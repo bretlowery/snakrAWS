@@ -6,6 +6,7 @@ import re
 import random
 import json
 import mimetypes
+from urllib.request import urlopen
 from urllib.parse import urlparse, quote, unquote
 from string import digits
 import requests
@@ -21,8 +22,7 @@ from validator_collection import validators
 from validator_collection.errors import InvalidURLError
 
 from bs4 import BeautifulSoup, Doctype as BS4Doctype
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument
+
 
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
 # See http://www.isthe.com/chongo/tech/comp/fnv/index.html for math-y details.
@@ -298,6 +298,8 @@ def get_target_meta(url, request):
         return val
 
     def _get_pdf_title(document):
+        from pdfminer.pdfparser import PDFParser
+        from pdfminer.pdfdocument import PDFDocument
         val = ""
         try:
             p = PDFParser(document)
@@ -307,15 +309,19 @@ def get_target_meta(url, request):
             pass
         return val
 
-    def _fetch_doctype(url):
-        mime_type = mimetypes.guess_type(url, strict=True)[0]
-        if mime_type:
-            def mt(x):
-                return {
-                    'text/html': 'html',
-                    'application/pdf': 'pdf',
-                    }.get(x, None)
-            return mt(mime_type)
+    def _fetch_doctype(targetdoc):
+        dt = None
+
+        def __mt(x):
+            return {
+                'text/html': 'html',
+                'application/pdf': 'pdf',
+                'text/plain': 'text',
+                }.get(x, None)
+        
+        if 'content-type' in targetdoc.headers:
+            dt = __mt(targetdoc.headers['content-type'])
+        return dt
 
     target = None
     try:
@@ -330,7 +336,7 @@ def get_target_meta(url, request):
             content = target.content
             doctype = None
             try:
-                soup = BeautifulSoup(content, "lxml")
+                soup = BeautifulSoup(content, "html.parser")
                 items = [item for item in soup.contents if isinstance(item, BS4Doctype)]
                 doctype = items[0] if items else None
             except:
@@ -340,8 +346,14 @@ def get_target_meta(url, request):
                 title = _get_html_title(soup)
                 description = _get_html_description(soup)
                 image_url = _get_image_url(soup)
-            elif doctype == "pdf":
-                title = _get_pdf_title(content)
+            else:
+                doctype = _fetch_doctype(url)
+                if doctype == "pdf":
+                    title = _get_pdf_title(content)
+                elif doctype == "text":
+                    title = url
+                else:
+                    title = url
 
     return title, description, image_url
 

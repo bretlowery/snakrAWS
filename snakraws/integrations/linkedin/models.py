@@ -92,4 +92,3 @@ class LinkedInMessage(object):
             result['item-content']['invitation-request']['authorization'] = auth
 
         return result
-

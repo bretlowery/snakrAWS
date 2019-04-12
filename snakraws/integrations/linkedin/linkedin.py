@@ -486,4 +486,3 @@ class LinkedInApplication(object):
         url = "%s/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=urn:li:organization:%s%s" % (
             ENDPOINTS.BASE, organization_id, shaer_str)
         return self.make_get_request(url)
-
