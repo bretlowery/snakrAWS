@@ -49,10 +49,11 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
 
         logger.debug("Response from reCaptcha server: %s", json_response)
         if bool(json_response['success']):
-            if self._score_threshold is not None and self._score_threshold > json_response['score']:
-                raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
             if getattr(settings, "TEST_LOW_CAPTCHA_SCORE", False):
                 raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
+            if self._score_threshold is not None:
+                if self._score_threshold > json_response['score'] and getattr(settings, "SITE_MODE", "dev") != "dev":
+                    raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
             return values[0]
         else:
             if 'error-codes' in json_response:

@@ -14,7 +14,7 @@ from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
-    get_longurlhash, get_host, get_referer, is_profane, get_target_meta
+    get_longurlhash, get_host, get_referer, is_profane, get_target_meta, fit_text
 from snakraws.ips import SnakrIP
 
 
@@ -25,6 +25,7 @@ class LongURL:
 
         lu = kwargs.pop('lu', None)
         vp = kwargs.pop('vp', None)
+        bl = kwargs.pop('bl', None)
 
         self.event = SnakrLogger()
 
@@ -65,6 +66,7 @@ class LongURL:
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
         self.title, self.description, self.image_url = get_target_meta(self.normalized_longurl, request)
+        self.byline = fit_text(bl or self.description, "", 300)
 
         return
 
@@ -135,6 +137,7 @@ class LongURL:
                           title=self.title,
                           description=self.description,
                           image_url=self.image_url,
+                          byline=self.byline,
                           is_active=True
                           )
             dl.save()

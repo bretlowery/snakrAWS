@@ -312,6 +312,10 @@ class LongURLs(models.Model):
             validators=[URLValidator()],
             null=True,
             blank=False)
+    byline = models.CharField(
+            max_length=300,
+            null=False,
+            blank=True)
 
     class Meta:
         app_label = TABLE_PREFIX

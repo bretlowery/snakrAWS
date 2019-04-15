@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load recaptcha3 %}
 
 {% block extra_head %}
@@ -7,31 +8,119 @@
 {% endblock %}
 
 {% block content %}
-    <form method="POST" class="post-form">{% csrf_token %}
-        {{ form.as_p }}
-        <div class="btn-group">
-            <button name="just_shorten_it" type="submit" class="save btn btn-default">&nbsp;{{ submit_label }}&nbsp;</button>&nbsp;&nbsp;
-            <button name="post2linkedin"   type="submit" class="save btn btn-default">&nbsp;{{ post2linkedin_label }}&nbsp;</button>
-        </div>
-    </form>
-    {% if message %}
-        <br/>
-        <br/>
-        <span class="text-nowrap">
-        {% if '200 ' in message %}
-            <span class="alert alert-success" >
-        {% else %}
-            <span class="alert alert-danger">
+    <div class="container-fluid">
+        <form method="POST" class="form-horizontal">{% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="row">
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger">{{error}}</div>
+            {% endfor %}
+            </div>
         {% endif %}
-                <strong>Result:&nbsp;</strong>{{ message }}
-            </span>
-        </span>
-    {% endif %}
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    {% if shorturl %}
-        <span class="alert alert-info"><strong>Short URL:&nbsp</strong><a href="{{ shorturl }}">{{ shorturl }}</a></span>
-    {% endif %}
+            <div class="form-group">
+            {% for field in form %}
+                <div class="row">
+                {% if field.name|lower != "captcha" %}
+                    <div class="col-md-4 control-label" style="display: inline-block;">
+                        {{ field.label_tag }}
+                        {% if field.help_text %}
+                            <sup>{{ field.help_text }}</sup>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                    <div class="col-md-8 pull-left">
+                        {% if field.name|lower == "captcha" %}
+                            {{ field }}
+                        {% else %}
+                            <input class="form-control input-sm"
+                                   style="display: inline-block;"
+                                   name="{{ field.name }}"
+                                   maxlength="{{ field.field.max_length }}"
+                                   id="id_{{ field.name }}"
+                                   {% if field.field.required %} required{% endif %}
+                                   {% if field.name|lower == "longurl" %} type="url"{% endif %}
+                            >
+                        {% endif %}
+                    </div>
+                </div>
+                {% for error in field.errors %}
+                    <div class="row">
+                        <div class="col-md-4">&nbsp;
+                        </div>
+                        <div class="col-md-8 pull-left">
+                            <div class="alert alert-danger">{{error}}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <br/>
+            {% if field.name == "captcha" %}
+                </div>
+                <div class="row">
+                    <div class="col-md-4">&nbsp;
+                    </div>
+                    <div class="col-md-8 pull-left">
+                        <div class="btn-group">
+                            <div class="col-md-4 pull-left">
+                                <button name="shortn" type="submit" class="save btn btn-default">&nbsp;{{ submit_label }}&nbsp;</button>
+                            </div>
+                            <div class="col-md-4">
+                                <button name="post2linkedin" type="submit" class="save btn btn-default">&nbsp;{{ post2linkedin_label }}&nbsp;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+                <div class="row">
+                    <div class="col-md-4">&nbsp;
+                    </div>
+                    <div class="col-md-8 pull-left">
+                    {% if message %}
+                        <div class="text-nowrap">
+                            <span class="alert {% if '200 ' in message %}alert-success{% else %}alert-danger{% endif %}" >
+                                <strong>{% trans "Result:" %}&nbsp;</strong>{{ message }}
+                            </span>
+                        </div>
+                    {% endif %}
+                    </div>
+                </div>
+                <br/>
+                <br/>
+                <div class="row">
+                    <div class="col-md-4">&nbsp;
+                    </div>
+                    <div class="col-md-8 pull-left">
+                        {% if shorturl %}
+                            <span class="text-nowrap">
+                                <span class="alert alert-info"><strong>Short URL:&nbsp</strong><a href="{{ shorturl }}">{{ shorturl }}</a></span>
+                            </span>
+                            {% if debug %}
+                                <br/>
+                                <br/>
+                                <br/>
+                                <br/>
+                                <br/>
+                                {% if post_title %}
+                                    <h6>{% trans "Title" %}</h6>
+                                    <span class="badge badge-primary">{{ post_title }}</span>
+                                    <br/><br/>
+                                {% endif %}
+                                {% if post_description %}
+                                    <h6>{% trans "Description" %}</h6>
+                                    <span class="badge badge-primary">{{ post_description }}</span>
+                                    <br/><br/>
+                                {% endif %}
+                                {% if post_image_url %}
+                                    <h6>{% trans "Image" %}</h6>
+                                    <span class="badge badge-primary">{{ post_image_url }}</span>
+                                    <br/><br/>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                 </div>
+            {% endif %}
+            {% endfor %}
+        </form>
+    </div>
 {% endblock %}

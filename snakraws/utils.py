@@ -44,13 +44,13 @@ BAD_THREE_LETTER_WORDS = [
     "kox",
     "koc",
     "kok",
-    "koq",    
+    "koq",
     "cac",
     "cak",
     "caq",
     "kac",
     "kak",
-    "kaq",    
+    "kaq",
     "dic",
     "dik",
     "diq",
@@ -170,7 +170,7 @@ BAD_THREE_LETTER_WORDS = [
     "rck",
     "sac",
     "sak",
-    "saq",    
+    "saq",
     "pms",
     "nad",
     "ndz",
@@ -297,14 +297,15 @@ def get_target_meta(url, request):
                             val = ""
         return val
 
-    def _get_pdf_title(document):
-        from pdfminer.pdfparser import PDFParser
-        from pdfminer.pdfdocument import PDFDocument
+    def _get_pdf_title(contentbytestream):
+        import io
+        from PyPDF2 import PdfFileReader
         val = ""
         try:
-            p = PDFParser(document)
-            d = PDFDocument(p)
-            val = d.info["title"]
+            with io.BytesIO(contentbytestream) as pdf:
+                pdfr = PdfFileReader(pdf)
+                pdfi = pdfr.getDocumentInfo()
+                val = str(pdfi.title)
         except:
             pass
         return val
@@ -328,33 +329,26 @@ def get_target_meta(url, request):
         target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
     except:
         pass
-    title = ""
+    title = url
     description = ""
     image_url = ""
     if target:
         if target.status_code == 200:
             content = target.content
-            doctype = None
-            try:
-                soup = BeautifulSoup(content, "html.parser")
-                items = [item for item in soup.contents if isinstance(item, BS4Doctype)]
-                doctype = items[0] if items else None
-            except:
-                soup = None
-                pass
-            if soup and doctype == 'html':
+            doctype = _fetch_doctype(target)
+            if doctype == 'html':
+                try:
+                    soup = BeautifulSoup(content, "html.parser")
+                except:
+                    soup = None
+                    pass
                 title = _get_html_title(soup)
                 description = _get_html_description(soup)
                 image_url = _get_image_url(soup)
-            else:
-                doctype = _fetch_doctype(url)
-                if doctype == "pdf":
-                    title = _get_pdf_title(content)
-                elif doctype == "text":
-                    title = url
-                else:
-                    title = url
-
+            elif doctype == "pdf":
+                title = _get_pdf_title(content)
+    if not title:
+        title = url
     return title, description, image_url
 
 
@@ -531,3 +525,11 @@ def is_profane(url):
                     return True
 
     return False
+
+
+def fit_text(text, suffix, maxlen=280):
+    ltmax = maxlen - len(suffix) - 1
+    if len(text) > ltmax:
+        return text[:ltmax - 3] + '... ' + suffix
+    else:
+        return text + ' ' + suffix

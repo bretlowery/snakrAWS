@@ -24,10 +24,6 @@
       });
     </script>
     {% endif %}
-    <script type="text/javascript">
-        var cachebuster = Math.round(new Date().getTime() / 1000);
-        document.write('<scr'+'ipt type="text/javascript" src="external.js?cb=' +cachebuster+'"></scr' + 'ipt>');
-    </script>
     {% comment %}
     The 1-second delay in the following meta refresh tag is necessary for LinkedInBot and other socmed posting bots to
     agree to load the og tags. A 0 tells the bot that this is a temporary not a permanent redirect, and they won't bother

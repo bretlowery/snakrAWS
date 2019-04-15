@@ -15,7 +15,7 @@ from snakraws import settings
 from snakraws.shorturls import ShortURL
 from snakraws.longurls import LongURL
 from snakraws.forms import ShortForm
-from snakraws.utils import get_message, get_json
+from snakraws.utils import get_message, get_json, fit_text
 from snakraws.__init__ import VERSION
 
 
@@ -78,13 +78,15 @@ def post_handler(request, **kwargs):
             lu = form.cleaned_data["longurl"]
         if "vanityurl" in form.cleaned_data:
             vp = form.cleaned_data["vanityurl"]
+        if "byline" in form.cleaned_data:
+            bl = form.cleaned_data["byline"]
     elif getattr(settings, 'SITE_MODE', 'prod') != 'dev':
         # disabling api for security reasons until OAuth is implemented for it
         return HttpResponseForbidden(_("Invalid Request"))
     #
     # create an instance of the LongURLs object, validate the long URL, and if successful load the LongURLs instance with it
     #
-    l = LongURL(request, lu=lu, vp=vp)
+    l = LongURL(request, lu=lu, vp=vp, bl=bl)
     #
     # generate the shorturl and either persist both the long and short urls if new,
     # or lookup the matching short url if it already exists (i.e. the long url was submitted a 2nd or subsequent time)
@@ -97,18 +99,14 @@ def post_handler(request, **kwargs):
     #
     # make response data
     #
+    response_data['byline'] = l.byline
+    response_data['description'] = l.description
+    response_data['image_url'] = l.image_url
     response_data['message'] = msg
     response_data['shorturl'] = shorturl
     response_data['title'] = l.title
     if l.title:
-        ls = len(shorturl)
-        lt = len(l.title)
-        ltmax = 280 - ls - 1
-        if lt > ltmax:
-            socialmediapost = l.title[:ltmax - 3] + '... ' + shorturl
-        else:
-            socialmediapost = l.title + ' ' + shorturl
-        response_data['socialmediapost'] = socialmediapost
+        response_data['socialmediapost'] = fit_text(l.title, shorturl, 280)
     #
     #
     #
@@ -140,18 +138,27 @@ def test_post_handler(request, *args, **kwargs):
 def form_handler(request, *args, **kwargs):
     message = ""
     shorturl = ""
+    post_title = ""
+    post_description = ""
+    post_image_url = ""
+    post_byline = ""
     form = ShortForm(request.POST or None)
     if request.method == "POST":
         if form.is_valid():
-            response_data = ""
+            response_data = []
             try:
                 response_data = post_handler(request, form=form)
                 message = response_data["message"][27:]
                 shorturl = response_data["shorturl"]
+                post_title = response_data["title"]
+                post_description = response_data["description"]
+                post_image_url = response_data["image_url"]
+                post_byline = response_data["byline"]
             except Exception as e:
                 form.add_error(NON_FIELD_ERRORS, str(e))
                 pass
 
+    debug  = getattr(settings, "DEBUG", False)
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
@@ -161,15 +168,20 @@ def form_handler(request, *args, **kwargs):
             request,
             'shorten_url.html',
             {
+                'action': 'shorten_url',
+                'debug': debug,
                 'form': form,
                 'title': title,
                 'heading': heading,
                 'submit_label': submit_label,
                 'post2linkedin_label': post2linkedin_label,
+                'post_byline': post_byline,
+                'post_title': post_title,
+                'post_description': post_description,
+                'post_image_url': post_image_url,
                 'message': message,
                 'shorturl': shorturl,
                 'sitekey': sitekey,
-                'action': 'shorten_url',
             }
     )
 

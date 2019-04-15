@@ -5,11 +5,11 @@ django-recaptcha3>=0.1.0
 future==0.14.3
 ipaddress>=1.0.22
 requests>=2.21
-pdfminer.six
 profanity-check>=1.0.2
 profanity-filter>=1.0.4
 profanityfilter>=2.0.6
 psycopg2-binary>=2.7.7
+PyPDF2>=1.26
 python-json-logger>=0.1.10
 python-opengraph>=0.0.2
 python-memcached>=1.59
