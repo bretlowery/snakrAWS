@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% comment %}
 {% load recaptcha3 %}
 
 {% block extra_head %}
     {% recaptcha_init %}
     {% recaptcha_ready action_name='shorten' %}
 {% endblock %}
+{% endcomment %}
 
 {% block content %}
     <div class="container-fluid">
@@ -20,7 +22,7 @@
             <div class="form-group">
             {% for field in form %}
                 <div class="row">
-                {% if field.name|lower != "captcha" %}
+                {% if field.name|lower != "frauddetector" %}
                     <div class="col-md-4 control-label" style="display: inline-block;">
                         {{ field.label_tag }}
                         {% if field.help_text %}
@@ -29,7 +31,7 @@
                     </div>
                 {% endif %}
                     <div class="col-md-8 pull-left">
-                        {% if field.name|lower == "captcha" %}
+                        {% if field.name|lower == "frauddetector" %}
                             {{ field }}
                         {% else %}
                             <input class="form-control input-sm"
@@ -53,7 +55,7 @@
                     </div>
                 {% endfor %}
                 <br/>
-            {% if field.name == "captcha" %}
+            {% if field.name == "frauddetector" %}
                 </div>
                 <div class="row">
                     <div class="col-md-4">&nbsp;

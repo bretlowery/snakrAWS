@@ -26,11 +26,18 @@ class ShortForm(forms.ModelForm):
             required=False,
             label=_('Byline to use, if posting:')
     )
-    captcha = SnakrReCaptchaField()
+    # captcha = SnakrReCaptchaField()
+    #
+    # ALWAYS keep 'frauddetector' field last; put any new fields above it here
+    frauddetector = forms.IntegerField(
+            widget=forms.HiddenInput(),
+            required=False
+    )
 
     class Meta:
         model = LongURLs
-        fields = ('longurl',)
+        # ALWAYS keep 'frauddetector' last; put any new fields before it here
+        fields = ('longurl', 'vanityurl', 'byline', 'frauddetector')
 
     error_css_class = 'error'
     required_css_class = 'bold'

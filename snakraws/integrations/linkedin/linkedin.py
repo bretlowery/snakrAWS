@@ -63,10 +63,10 @@ class LinkedInDeveloperAuthentication(object):
     during the development process.
     """
 
-    def __init__(self, consumer_key, consumer_secret, user_token, user_secret,
+    def __init__(self, linkedin_client_id, linkedin_client_secret, user_token, user_secret,
                  redirect_uri, permissions=[]):
-        self.consumer_key = consumer_key
-        self.consumer_secret = consumer_secret
+        self.linkedin_client_id = linkedin_client_id
+        self.linkedin_client_secret = linkedin_client_secret
         self.user_token = user_token
         self.user_secret = user_secret
         self.redirect_uri = redirect_uri
@@ -169,7 +169,7 @@ class LinkedInApplication(object):
 
         if isinstance(self.authentication, LinkedInDeveloperAuthentication):
             # Let requests_oauthlib.OAuth1 do *all* of the work here
-            auth = OAuth1(self.authentication.consumer_key, self.authentication.consumer_secret,
+            auth = OAuth1(self.authentication.linkedin_client_id, self.authentication.linkedin_client_secret,
                           self.authentication.user_token, self.authentication.user_secret)
             kw.update({'auth': auth})
         else:
