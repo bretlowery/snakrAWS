@@ -15,7 +15,7 @@
         {% if form.non_field_errors %}
             <div class="row">
             {% for error in form.non_field_errors %}
-                <div class="alert alert-danger">{{error}}</div>
+                <div class="alert alert-danger">{{ error|cut:"['"|cut:"']" }}</div>
             {% endfor %}
             </div>
         {% endif %}
@@ -50,7 +50,7 @@
                         <div class="col-md-4">&nbsp;
                         </div>
                         <div class="col-md-8 pull-left">
-                            <div class="alert alert-danger">{{error}}</div>
+                            <div class="alert alert-danger">{{ error|cut:"['"|cut:"']" }}</div>
                         </div>
                     </div>
                 {% endfor %}

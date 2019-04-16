@@ -7,14 +7,16 @@ from urllib.parse import urlparse
 
 from django.http import Http404
 from django.db import transaction as xaction
+from django.forms import ValidationError
 
 from snakraws import settings
+from snakraws.settings import CANONICAL_MESSAGES
 from snakraws.models import LongURLs, ShortURLs
 from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
-    get_longurlhash, get_host, get_referer, is_profane, get_target_meta, fit_text
+    get_longurlhash, get_host, get_referer, is_profane, get_target_meta, fit_text, get_message
 from snakraws.ips import SnakrIP
 
 
@@ -64,6 +66,14 @@ class LongURL:
         self.longurl_is_preencoded = preencoded
         self.longurl = lurl
         self.hash = get_longurlhash(self.normalized_longurl)
+
+        # DISALLOWED! a short url cannot be a subsequent long url to shorten!
+        sh = 'http://%s' % getattr(settings, 'SHORTURL_HOST', 'localhost')
+        ssh = 'https://%s' % getattr(settings, 'SECURE_SHORTURL_HOST', 'bret.guru')
+        lnl = self.normalized_longurl.lower()
+        if sh in lnl or ssh in lnl:
+            raise ValidationError(get_message("DISALLOW_DOUBLE_SHORTENING"))
+
         self.id = -1
         self.title, self.description, self.image_url = get_target_meta(self.normalized_longurl, request)
         self.byline = fit_text(bl or self.description, "", 300)

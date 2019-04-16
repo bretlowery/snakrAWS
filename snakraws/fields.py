@@ -5,11 +5,10 @@ import os
 import requests
 
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import SuspiciousOperation
 
 from snakraws import settings
-from snakraws.settings import CANONICAL_MESSAGES
+from snakraws.utils import get_message
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
         except requests.RequestException as e:
             logger.exception(e)
             raise ValidationError(
-                    CANONICAL_MESSAGES["RECAPTCHA_EXCEPTION"],
+                    get_message("RECAPTCHA_EXCEPTION"),
                     code='connection_failed'
             )
 
@@ -50,10 +49,10 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
         logger.debug("Response from reCaptcha server: %s", json_response)
         if bool(json_response['success']):
             if getattr(settings, "TEST_LOW_CAPTCHA_SCORE", False):
-                raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
+                raise SuspiciousOperation(get_message("RECAPTCHA_LOW_SCORE"))
             if self._score_threshold is not None:
                 if self._score_threshold > json_response['score'] and getattr(settings, "SITE_MODE", "dev") != "dev":
-                    raise SuspiciousOperation(CANONICAL_MESSAGES["RECAPTCHA_LOW_SCORE"])
+                    raise SuspiciousOperation(get_message("RECAPTCHA_LOW_SCORE"))
             return values[0]
         else:
             if 'error-codes' in json_response:
@@ -62,17 +61,17 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
 
                     logger.exception('Invalid reCaptcha secret key detected')
                     raise ValidationError(
-                            CANONICAL_MESSAGES["RECAPTCHA_EXCEPTION"],
+                            get_message("RECAPTCHA_EXCEPTION"),
                             code='invalid_secret',
                     )
                 else:
                     raise ValidationError(
-                            CANONICAL_MESSAGES["RECAPTCHA_EXPIRED"],
+                            get_message("RECAPTCHA_EXPIRED"),
                             code='expired',
                     )
             else:
                 logger.exception('No error-codes received from Google reCaptcha server')
                 raise ValidationError(
-                        CANONICAL_MESSAGES["RECAPTCHA_EXCEPTION"],
+                        get_message("RECAPTCHA_EXCEPTION"),
                         code='invalid_response',
                 )
