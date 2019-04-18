@@ -225,4 +225,3 @@ class LongURL:
             # 4. Return the short url
             #
         return s.shorturl, msg
-

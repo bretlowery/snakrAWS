@@ -75,3 +75,4 @@ class SnakrReCaptchaField(fields.ReCaptchaField):
                         get_message("RECAPTCHA_EXCEPTION"),
                         code='invalid_response',
                 )
+

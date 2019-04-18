@@ -57,4 +57,3 @@ class ShortForm(forms.ModelForm):
     def clean_byline(self):
         bl = self.cleaned_data['byline'].strip()
         return bl
-

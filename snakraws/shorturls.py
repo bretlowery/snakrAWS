@@ -198,5 +198,3 @@ class ShortURL:
         # Return the longurl
         #
         return longurl, msg, 301, title, description, image_url
-
-

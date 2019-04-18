@@ -191,3 +191,4 @@ def api_handler(request):
         if get_json(request, 'lu'):
             return post_handler(request)
     return HttpResponseForbidden(_("Invalid Request"))
+
