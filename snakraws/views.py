@@ -49,11 +49,13 @@ def get_handler(request):
         public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
         public_version = VERSION
         ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
+        ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
         return render(
                 request,
                 'redirectr.html',
                 {
                     'ga_enabled': ga_enabled,
+                    'ga_id': ga_id,
                     'image_url': image_url,
                     'inpage': description,
                     'longurl': longurl,

@@ -14,8 +14,9 @@ from snakraws.utils import get_shortening_postback, get_admin_postback, get_jet_
 title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
 heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
 sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
-login_extra_context = {'title': title, 'heading': heading, 'sitekey': sitekey, 'action': 'login'}
-logout_extra_context = {'title': title, 'heading': heading}
+ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
+login_extra_context = {'title': title, 'heading': heading, 'sitekey': sitekey, 'action': 'login', 'ga_id': ga_id}
+logout_extra_context = {'title': title, 'heading': heading, 'ga_id': ga_id}
 
 urlpatterns = [
     re_path(r'^$', lambda r: HttpResponsePermanentRedirect(getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery"), content_type="text/html")),
