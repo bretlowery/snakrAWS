@@ -36,6 +36,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.humanize',
     'django.contrib.sitemaps',
+    'django_social_share'
 )
 
 MIDDLEWARE = [

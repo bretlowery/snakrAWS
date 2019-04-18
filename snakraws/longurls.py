@@ -67,7 +67,7 @@ class LongURL:
         self.longurl = lurl
         self.hash = get_longurlhash(self.normalized_longurl)
 
-        # DISALLOWED! a short url cannot be a subsequent long url to shorten!
+        # DISALLOWED! a Snakr short url cannot be a subsequent long url to shorten!
         sh = 'http://%s' % getattr(settings, 'SHORTURL_HOST', 'localhost')
         ssh = 'https://%s' % getattr(settings, 'SECURE_SHORTURL_HOST', 'bret.guru')
         lnl = self.normalized_longurl.lower()

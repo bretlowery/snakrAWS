@@ -162,8 +162,7 @@ def form_handler(request, *args, **kwargs):
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
-    submit_label        = _("Just Shorten It")
-    post2linkedin_label = _("Shorten Then Post On LinkedIn")
+    submit_label = _("Shorten It")
     return render(
             request,
             'shorten_url.html',
@@ -174,7 +173,6 @@ def form_handler(request, *args, **kwargs):
                 'title': title,
                 'heading': heading,
                 'submit_label': submit_label,
-                'post2linkedin_label': post2linkedin_label,
                 'post_byline': post_byline,
                 'post_title': post_title,
                 'post_description': post_description,
