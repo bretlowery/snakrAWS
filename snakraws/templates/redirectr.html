@@ -9,12 +9,12 @@
     {% if longurl_title and longurl_title.strip %}<title>{{ longurl_title }}</title>{% endif %}
     {% if ga_enabled %}
     <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3767544-3"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id='{{ ga_id }}'"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'UA-3767544-3');
+      gtag('config', '{{ ga_id }}');
       gtag('event', 'redirect', {
           'event_category': '{{ shorturl|get_netloc }}',
           'event_action': 'redirect',
