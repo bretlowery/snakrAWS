@@ -349,6 +349,7 @@ def get_target_meta(url, request):
                 title = _get_pdf_title(content)
     if not title:
         title = url
+    title = fit_text(title, "", 100)
     return title, description, image_url
 
 
