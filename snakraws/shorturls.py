@@ -112,6 +112,7 @@ class ShortURL:
             latest = ShortURLs.objects.filter(is_active=True).order_by('-id')[0]
             if latest:
                 dsurl = latest.shorturl
+                surl = dsurl
                 sparts = urlparse(dsurl)
             else:
                 raise Http404
