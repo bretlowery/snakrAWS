@@ -300,11 +300,11 @@ class LongURLs(models.Model):
     is_active = models.BooleanField(
             null=False)
     title = models.CharField(
-            max_length=1024,
+            max_length=100,
             null=False,
             blank=True)
     description = models.CharField(
-            max_length=4096,
+            max_length=300,
             null=False,
             blank=True)
     image_url = models.CharField(
@@ -313,7 +313,7 @@ class LongURLs(models.Model):
             null=True,
             blank=False)
     byline = models.CharField(
-            max_length=300,
+            max_length=100,
             null=False,
             blank=True)
 

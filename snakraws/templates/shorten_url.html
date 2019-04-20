@@ -33,6 +33,15 @@
                     {% endif %}
                     {% if field.name|lower == "frauddetector" %}
                         {{ field }}
+                    {% elif field.name|lower == "description" %}
+                        <div class="col-sm-12">
+                            <textarea class="form-control"
+                                   name="{{ field.name }}"
+                                   rows="6"
+                                   maxlength="{{ field.field.max_length }}"
+                                   id="id_{{ field.name }}"
+                            ></textarea>
+                        </div>
                     {% else %}
                         <div class="col-sm-12">
                             <input class="form-control input-sm"
