@@ -1,63 +1,76 @@
 {% load filters %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <!-- {{ public_name }} {{ version }} -->
-    <meta charset="UTF-8">
-    {% if longurl_title and longurl_title.strip %}<meta content="{{ longurl_title }}" property="og:title" />{% endif %}
-    {% if longurl_description and longurl_description.strip %}<meta content="{{ longurl_description }}" property="og:description" />{% endif %}
-    {% if longurl_title and longurl_title.strip %}<title>{{ longurl_title }}</title>{% endif %}
+    <head>
+        <!-- {{ public_name }} {{ version }} -->
+        <meta charset="UTF-8">
+    {% if longurl_byline and longurl_byline.strip %}
+        <title>{{ longurl_byline }}</title>
+        <meta content="{{ longurl_byline }}" property="og:title" />
+    {% elif longurl_title and longurl_title.strip %}
+        <title>{{ longurl_title }}</title>
+        <meta content="{{ longurl_title }}" property="og:title" />
+    {% endif %}
+    {% if longurl_description and longurl_description.strip %}
+        <meta content="{{ longurl_description }}" property="og:description" />
+    {% elif longurl_title and longurl_title.strip %}
+        <meta content="{{ longurl_title }}" property="og:description" />
+    {% endif %}
     {% if ga_enabled %}
     <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id='{{ ga_id }}'"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '{{ ga_id }}');
-      gtag('event', 'redirect', {
-          'event_category': '{{ shorturl|get_netloc }}',
-          'event_action': 'redirect',
-          'event_label': '{{ shorturl|get_path }}',
-          'value': '{{ shorturl|get_path }}',
-          'title': '{{ longurl_title }}'
-      });
-    </script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id='{{ ga_id }}'"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '{{ ga_id }}');
+          gtag('event', 'redirect', {
+              'event_category': '{{ shorturl|get_netloc }}',
+              'event_action': 'redirect',
+              'event_label': '{{ shorturl|get_path }}',
+              'value': '{{ shorturl|get_path }}',
+              'title': '{{ longurl_title }}'
+          });
+        </script>
     {% endif %}
     {% comment %}
     The 1-second delay in the following meta refresh tag is necessary for LinkedInBot and other socmed posting bots to
     agree to load the og tags. A 0 tells the bot that this is a temporary not a permanent redirect, and they won't bother
     to load and render the og tags in the post. You can test shorturl resolution on LinkedIn and see what the post will look
-    like before you actully post it by using LinkedIn's Post Inspector at https://www.linkedin.com/post-inspector/inspect/ .
+    like before you actully post it by using LinkedIn's Post Inspector at https://www.linkedin.com/post-inspector/inspect/.
+    Note the shorter timeout in the JS redirection means we'll use it if we can.
     {% endcomment %}
-    <meta http-equiv="refresh" content="1; url={{ longurl }}">
-    <style>
-        body {background-color: #FFFFFF;}
-    </style>
-</head>
-<body>
+        <script>
+            function snakAway() {
+                window.location.replace("{{ longurl }}");
+            }
+            setTimeout(snakAway, 200);
+        </script>
+        <meta http-equiv="refresh" content="1; url={{ longurl }}">
+        <style>
+            body {background-color: #FFFFFF;}
+        </style>
+    </head>
+    <body>
     {% comment %}
     Here, we embed the og values into page elements to ensure the LinkedInBot etc consider the redirect page a "valid" page.
     We intend no malfeasance -- we're just shortening URLs after all. This increases our quality score with the site to ensure that.
     {% endcomment %}
     {% if image_url or inpage %}
-    <table border="0">
-        <tr>
-            {% if image_url and image_url.strip %}
-            <td width="50%">
-                <img src="{{ image_url }}" height="1" width="1">
-            </td>
-            {% endif %}
-            {% if inpage and inpage.strip %}
-            <td width="50%">
-                <font style="color: #FFFFFF;">
-                    {{ inpage }}<br/>
-                    {{ cachebuster }}
-                </font>
-            </td>
-            {% endif %}
-        </tr>
-    </table>
+        <table border="0">
+            <tr>
+                {% if image_url and image_url.strip %}
+                <td width="50%">
+                    <img src="{{ image_url }}" height="1" width="1">
+                </td>
+                {% endif %}
+                {% if inpage and inpage.strip %}
+                <td width="50%">
+                    <p><span style="color: #FFFFFF;">{{ inpage }}</span></p>
+                </td>
+                {% endif %}
+            </tr>
+        </table>
     {% endif %}
-</body>
+    </body>
 </html>
