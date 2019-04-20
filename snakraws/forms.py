@@ -7,8 +7,6 @@ from django.utils.translation import ugettext_lazy as _
 from snakraws.models import LongURLs
 from snakraws.utils import get_message
 
-from snakraws.fields import SnakrReCaptchaField
-
 
 class ShortForm(forms.ModelForm):
     longurl = forms.URLField(
@@ -24,7 +22,12 @@ class ShortForm(forms.ModelForm):
     byline = forms.CharField(
             max_length=300,
             required=False,
-            label=_('Byline to use, if posting:')
+            label=_('Custom byline to use, if any:')
+    )
+    description = forms.CharField(
+            max_length=4096,
+            required=False,
+            label=_('Custom description to use, if any:')
     )
     # captcha = SnakrReCaptchaField()
     #
@@ -37,10 +40,7 @@ class ShortForm(forms.ModelForm):
     class Meta:
         model = LongURLs
         # ALWAYS keep 'frauddetector' last; put any new fields before it here
-        fields = ('longurl', 'vanityurl', 'byline', 'frauddetector')
-
-    error_css_class = 'error'
-    required_css_class = 'bold'
+        fields = ('longurl', 'vanityurl', 'byline', 'description', 'frauddetector')
 
     def clean_longurl(self):
         lu = self.cleaned_data['longurl'].strip()
@@ -57,3 +57,10 @@ class ShortForm(forms.ModelForm):
     def clean_byline(self):
         bl = self.cleaned_data['byline'].strip()
         return bl
+
+    def clean_description(self):
+        d = self.cleaned_data['description'].strip()
+        if 0 < len(d) < 100:
+            msg = get_message("DESCRIPTION_INVALID")
+            raise ValidationError(msg)
+        return d
