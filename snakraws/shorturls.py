@@ -5,6 +5,7 @@ needed to construct a short URL when a long URL is submitted to Snakr.
 
 from urllib.parse import urlparse, urlunparse
 from django.db import transaction as xaction
+from django.http import Http404
 
 from snakraws import settings
 from snakraws.persistence import SnakrLogger
@@ -107,6 +108,14 @@ class ShortURL:
         surl = request.build_absolute_uri()
         dsurl = get_decodedurl(surl)
         sparts = urlparse(dsurl)
+        if sparts.path == '/last':
+            latest = ShortURLs.objects.filter(is_active=True).order_by('-id')[0]
+            if latest:
+                dsurl = latest.shorturl
+                sparts = urlparse(dsurl)
+            else:
+                raise Http404
+
         if surl == dsurl:
             preencoded = False
         else:
@@ -168,9 +177,9 @@ class ShortURL:
                     value=self.shorturl,
                     status_code=404)
         #
-        # Lookup the matching long url by the short url's id, and decode it.
+        # Lookup the matching long url by the short url's id, and decode it. Must be active!
         #
-        l = LongURLs.objects.get(id=s.longurl_id)
+        l = LongURLs.objects.get(id=s.longurl_id, is_active=True)
         if not l:
             raise self.event.log(request=request,
                                  messagekey='HTTP_404',
@@ -182,6 +191,7 @@ class ShortURL:
         title = l.title
         description = l.description
         image_url = l.image_url
+        byline = l.byline
         #
         # Log that a permanent redirect response to the matching long url is about to occur
         #
@@ -197,4 +207,4 @@ class ShortURL:
         #
         # Return the longurl
         #
-        return longurl, msg, 301, title, description, image_url
+        return longurl, msg, 301, title, description, image_url, byline
