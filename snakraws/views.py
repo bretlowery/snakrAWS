@@ -41,7 +41,7 @@ def get_handler(request):
     #
     # lookup the long url previously used to generate the short url
     #
-    longurl, msg, redirect_status_code, title, description, image_url = s.get_long(request)
+    longurl, msg, redirect_status_code, title, description, image_url, byline = s.get_long(request)
     #
     # if found, redirect to it; otherwise, 404
     #
@@ -59,6 +59,7 @@ def get_handler(request):
                     'image_url': image_url,
                     'inpage': description,
                     'longurl': longurl,
+                    'longurl_byline': byline,
                     'longurl_title': title,
                     'longurl_description': description,
                     'shorturl': s.normalized_shorturl,
@@ -82,13 +83,15 @@ def post_handler(request, **kwargs):
             vp = form.cleaned_data["vanityurl"]
         if "byline" in form.cleaned_data:
             bl = form.cleaned_data["byline"]
+        if "description" in form.cleaned_data:
+            de = form.cleaned_data["description"]
     elif getattr(settings, 'SITE_MODE', 'prod') != 'dev':
         # disabling api for security reasons until OAuth is implemented for it
         return HttpResponseForbidden(_("Invalid Request"))
     #
     # create an instance of the LongURLs object, validate the long URL, and if successful load the LongURLs instance with it
     #
-    l = LongURL(request, lu=lu, vp=vp, bl=bl)
+    l = LongURL(request, lu=lu, vp=vp, bl=bl, de=de)
     #
     # generate the shorturl and either persist both the long and short urls if new,
     # or lookup the matching short url if it already exists (i.e. the long url was submitted a 2nd or subsequent time)
