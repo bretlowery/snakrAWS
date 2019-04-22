@@ -169,24 +169,25 @@ def form_handler(request, *args, **kwargs):
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
     submit_label = _("Shorten It")
     linkedin_link_label = _("QuickPost On LinkedIn")
+    action = _("shorten_url")
     return render(
             request,
             'shorten_url.html',
             {
-                'action': 'shorten_url',
+                'action': action,
                 'debug': debug,
                 'form': form,
-                'title': title,
                 'heading': heading,
                 'linkedin_link_label': linkedin_link_label,
-                'submit_label': submit_label,
+                'message': message,
                 'post_byline': post_byline,
-                'post_title': post_title,
                 'post_description': post_description,
                 'post_image_url': post_image_url,
-                'message': message,
+                'post_title': post_title,
                 'shorturl': shorturl,
                 'sitekey': sitekey,
+                'title': title,
+                'submit_label': submit_label,
             }
     )
 
