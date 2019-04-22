@@ -92,14 +92,15 @@
                                 <span class="alert alert-info"><strong>Short URL:&nbsp</strong><a href="{{ shorturl }}">{{ shorturl }}</a></span>
                             </span>
                             {% if shorturl %}
-                                &nbsp;&nbsp;
                                 {% if 'localhost' not in shorturl %}
+                                    <br/>
+                                    <br/>
                                     {% if post_byline %}
-                                        {% post_to_linkedin "Click here to share on LinkedIn" shorturl post_byline %}
+                                        {% post_to_linkedin post_byline shorturl linkedin_link_label %}
                                     {% elif post_description %}
-                                        {% post_to_linkedin "Click here to share on LinkedIn" shorturl post_description %}
+                                        {% post_to_linkedin post_description shorturl linkedin_link_label %}
                                     {% else %}
-                                        {% post_to_linkedin "Click here to share on LinkedIn" shorturl post_title %}
+                                        {% post_to_linkedin post_title shorturl linkedin_link_label %}
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
