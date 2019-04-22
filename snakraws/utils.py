@@ -534,3 +534,24 @@ def fit_text(text, suffix, maxlen=280):
         return text[:ltmax - 3] + '... ' + suffix
     else:
         return text + ' ' + suffix
+
+
+def get_request_path(request):
+    return urlparse(get_decodedurl(request.build_absolute_uri())).path
+
+
+def requested_robots_txt(request):
+    return get_request_path(request) == "/robots.txt"
+
+
+def requested_ads_txt(request):
+    return get_request_path(request) == "/ads.txt"
+
+
+def requested_directive(request):
+    return requested_robots_txt(request) or requested_ads_txt(request)
+
+
+def requested_last(request):
+    return get_request_path(request) == "/last"
+

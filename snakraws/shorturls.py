@@ -11,7 +11,7 @@ from snakraws import settings
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.models import ShortURLs, LongURLs
-from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid, is_shortpath_valid
+from snakraws.utils import get_shortpathcandidate, get_shorturlhash, get_decodedurl, get_host, get_referer, is_url_valid, is_shortpath_valid, requested_last
 
 class ShortURL:
     """Validates and processes the short URL in the GET request."""
@@ -108,7 +108,7 @@ class ShortURL:
         surl = request.build_absolute_uri()
         dsurl = get_decodedurl(surl)
         sparts = urlparse(dsurl)
-        if sparts.path == '/last':
+        if requested_last(request):
             latest = ShortURLs.objects.filter(is_active=True).order_by('-id')[0]
             if latest:
                 dsurl = latest.shorturl
