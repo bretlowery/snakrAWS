@@ -4,6 +4,8 @@
     <head>
         <!-- {{ public_name }} {{ version }} -->
         <meta charset="UTF-8">
+        <!-- prevent favicon -->
+        <link rel="icon" href="data:;base64,=">
     {% if longurl_byline and longurl_byline.strip %}
         <title>{{ longurl_byline }}</title>
         <meta content="{{ longurl_byline }}" property="og:title" />
