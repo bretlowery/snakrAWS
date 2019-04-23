@@ -163,7 +163,7 @@ def form_handler(request, *args, **kwargs):
                 form.add_error(NON_FIELD_ERRORS, str(e))
                 pass
 
-    debug  = getattr(settings, "DEBUG", False)
+    debug = getattr(settings, "DEBUG", False)
     title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
     heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
     sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")

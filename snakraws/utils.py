@@ -6,7 +6,6 @@ import re
 import random
 import json
 import mimetypes
-from urllib.request import urlopen
 from urllib.parse import urlparse, quote, unquote
 from string import digits
 import requests

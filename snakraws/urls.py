@@ -7,19 +7,23 @@ from django.http import HttpResponse, HttpResponsePermanentRedirect
 from django.urls import re_path, include
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic.base import RedirectView
 
 from snakraws import settings, views
 from snakraws.utils import get_shortening_postback, get_admin_postback, get_jet_postback, get_jet_dashboard_postback, get_shortening_redirect
 
+index_html = getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery")
 title = getattr(settings, "PAGE_TITLE", settings.VERBOSE_NAME)
 heading = getattr(settings, "PAGE_HEADING", settings.VERBOSE_NAME)
 sitekey = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
 ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
 login_extra_context = {'title': title, 'heading': heading, 'sitekey': sitekey, 'action': 'login', 'ga_id': ga_id}
 logout_extra_context = {'title': title, 'heading': heading, 'ga_id': ga_id}
+favicon_path = getattr(settings, "STATIC_URL", "/static/") + 'favicon.ico'
 
 urlpatterns = [
-    re_path(r'^$', lambda r: HttpResponsePermanentRedirect(getattr(settings, "INDEX_HTML", "http://www.linkedin.com/in/bretlowery"), content_type="text/html")),
+    re_path(r'^favicon.ico$', RedirectView.as_view(url=favicon_path)),
+    re_path(r'^$', lambda r: HttpResponsePermanentRedirect(index_html, content_type="text/html")),
     re_path(r'^ads.txt$', lambda r: HttpResponse("# no ads just snaks", content_type="text/plain")),
     re_path(r'^robots.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     re_path(get_jet_postback(), include('jet.urls', 'jet')),
