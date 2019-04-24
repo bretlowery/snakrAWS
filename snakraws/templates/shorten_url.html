@@ -90,13 +90,18 @@
                             <span class="text-nowrap">
                                 <span class="alert alert-info" style="display: inline-block;"><strong>{% trans "Short URL:" %}<br/></strong><a href="{{ shorturl }}">{{ shorturl }}</a>
                                 {% if 'localhost' not in shorturl %}
-                                    <br/><strong>{% trans "Click below to post this shortl URL to:" %}</strong><br/>
+                                    <br/><strong>{% trans "Click below to post this short URL to:" %}</strong><br/>
+                                        {% post_to_facebook shorturl "Facebook" %}
                                     {% if post_byline %}
                                         {% post_to_linkedin post_byline shorturl "LinkedIn" %}
-                                    {% elif post_description %}
-                                        {% post_to_linkedin post_description shorturl "LinkedIn" %}
+                                        {% post_to_reddit post_byline shorturl "Reddit" %}
+                                        {% post_to_telegram post_byline shorturl "Telegram" %}
+                                        {% post_to_twitter post_byline shorturl "Twitter" %}
                                     {% else %}
                                         {% post_to_linkedin post_title shorturl "LinkedIn" %}
+                                        {% post_to_reddit post_title shorturl "Reddit" %}
+                                        {% post_to_telegram post_title shorturl "Telegram" %}
+                                        {% post_to_twitter post_title shorturl "Twitter" %}
                                     {% endif %}
                                 {% endif %}
                                 </span>
