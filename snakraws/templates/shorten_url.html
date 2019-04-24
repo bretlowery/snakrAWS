@@ -76,34 +76,31 @@
                     <div class="col-sm-12">
                     {% if message %}
                         <div class="text-nowrap">
-                            <span class="alert {% if '200 ' in message %}alert-success{% else %}alert-danger{% endif %}" >
-                                <strong>{% trans "Result:" %}&nbsp;</strong>{{ message }}
+                            <span class="alert {% if '200 ' in message %}alert-success{% else %}alert-danger{% endif %}" style="display: inline-block;">
+                                <strong>{% trans "Result:" %}&nbsp;</strong><br/>
+                                {{ message }}
                             </span>
                         </div>
                     {% endif %}
                     </div>
                 </div>
-                <br/>
-                <br/>
                 <div class="row">
                     <div class="col-sm-12">
                         {% if shorturl %}
                             <span class="text-nowrap">
-                                <span class="alert alert-info"><strong>Short URL:&nbsp</strong><a href="{{ shorturl }}">{{ shorturl }}</a></span>
-                            </span>
-                            {% if shorturl %}
+                                <span class="alert alert-info" style="display: inline-block;"><strong>{% trans "Short URL:" %}<br/></strong><a href="{{ shorturl }}">{{ shorturl }}</a>
                                 {% if 'localhost' not in shorturl %}
-                                    <br/>
-                                    <br/>
+                                    <br/><strong>{% trans "Click below to post this shortl URL to:" %}</strong><br/>
                                     {% if post_byline %}
-                                        {% post_to_linkedin post_byline shorturl linkedin_link_label %}
+                                        {% post_to_linkedin post_byline shorturl "LinkedIn" %}
                                     {% elif post_description %}
-                                        {% post_to_linkedin post_description shorturl linkedin_link_label %}
+                                        {% post_to_linkedin post_description shorturl "LinkedIn" %}
                                     {% else %}
-                                        {% post_to_linkedin post_title shorturl linkedin_link_label %}
+                                        {% post_to_linkedin post_title shorturl "LinkedIn" %}
                                     {% endif %}
                                 {% endif %}
-                            {% endif %}
+                                </span>
+                            </span>
                             {% if debug %}
                                 <br/>
                                 <br/>
