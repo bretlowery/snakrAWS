@@ -184,28 +184,25 @@ class ShortURL:
         if not l:
             raise self.event.log(request=request,
                                  messagekey='HTTP_404',
-                                 value='ERROR, HTTP 404 longurl not found',
+                                 value='Longurl not found',
                                  longurl=l,
                                  shorturl=s,
                                  status_code=404)
-        longurl = get_decodedurl(l.longurl)
-        title = l.title
-        description = l.description
-        image_url = l.image_url
-        byline = l.byline
+        l.longurl = get_decodedurl(l.longurl)
         #
         # Log that a permanent redirect response to the matching long url is about to occur
         #
+        status_code = 301
         msg = self.event.log(
                 request=request,
                 event_type='S',
-                messagekey='HTTP_301',
-                value=longurl,
+                messagekey='HTTP_%d' % status_code,
+                value=l.longurl,
                 longurl=l,
                 shorturl=s,
-                status_code=301
+                status_code=status_code
         )
         #
         # Return the longurl
         #
-        return longurl, msg, 301, title, description, image_url, byline
+        return l, status_code

@@ -268,10 +268,10 @@ def get_target_meta(url, request):
         val = ""
         og_title = soupobj.find("meta", property="og:title")
         if og_title:
-            val = og_title.attrs["content"]
+            val = og_title.attrs["content"].strip()
         else:
             try:
-                val = soupobj.title.string
+                val = soupobj.title.string.strip()
             except:
                 pass
         return val
@@ -280,7 +280,7 @@ def get_target_meta(url, request):
         val = ""
         og_description = soupobj.find("meta", property="og:description")
         if og_description:
-            val = og_description.attrs["content"]
+            val = og_description.attrs["content"].strip()
         return val
 
     def _get_image_url(soupobj):
@@ -296,6 +296,13 @@ def get_target_meta(url, request):
                             val = ""
         return val
 
+    def _get_site_name(soupobj):
+        val = ""
+        og_description = soupobj.find("meta", property="og:site_name")
+        if og_description:
+            val = og_description.attrs["content"].strip()
+        return val
+
     def _get_pdf_title(contentbytestream):
         import io
         from PyPDF2 import PdfFileReader
@@ -304,7 +311,7 @@ def get_target_meta(url, request):
             with io.BytesIO(contentbytestream) as pdf:
                 pdfr = PdfFileReader(pdf)
                 pdfi = pdfr.getDocumentInfo()
-                val = str(pdfi.title)
+                val = str(pdfi.title).strip()
         except:
             pass
         return val
@@ -331,6 +338,7 @@ def get_target_meta(url, request):
     title = url
     description = ""
     image_url = ""
+    site_name = ""
     if target:
         if target.status_code == 200:
             content = target.content
@@ -344,12 +352,13 @@ def get_target_meta(url, request):
                 title = _get_html_title(soup)
                 description = _get_html_description(soup)
                 image_url = _get_image_url(soup)
+                site_name = _get_site_name(soup)
             elif doctype == "pdf":
                 title = _get_pdf_title(content)
     if not title:
         title = url
     title = fit_text(title, "", 100)
-    return title, description, image_url
+    return title, description, image_url, site_name
 
 
 def is_shortpath_valid(shortpath):

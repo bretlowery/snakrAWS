@@ -122,7 +122,8 @@ create table snakraws_longurls (
     title               VARCHAR(100) NOT NULL DEFAULT '',
     description         VARCHAR(300) NOT NULL DEFAULT '',
     image_url           VARCHAR(4096) NULL,
-    byline              VARCHAR(100) NOT NULL DEFAULT ''
+    byline              VARCHAR(100) NOT NULL DEFAULT '',
+    site_name           VARCHAR(100) NOT NULL DEFAULT ''
 );
 
 INSERT INTO snakraws_longurls (id, hash, longurl, is_active)

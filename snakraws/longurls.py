@@ -72,7 +72,7 @@ class LongURL:
         self.normalized_longurl_scheme = urlparse(lurl).scheme.lower()
         self.longurl_is_preencoded = preencoded
         self.longurl = lurl
-        self.title, self.description, self.image_url = get_target_meta(self.normalized_longurl, request)
+        self.title, self.description, self.image_url, self.site_name = get_target_meta(self.normalized_longurl, request)
         self.title = fit_text(self.title, "", 100)
         self.byline = fit_text(self.title if not bl else bl, "", 100)
         self.description = fit_text(self.description if not de else de, "", 300)
@@ -149,6 +149,7 @@ class LongURL:
                           description=self.description,
                           image_url=self.image_url,
                           byline=self.byline,
+                          site_name=self.site_name,
                           is_active=True
                           )
             dl.save()

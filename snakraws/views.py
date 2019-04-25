@@ -41,11 +41,11 @@ def get_handler(request):
     #
     # lookup the long url previously used to generate the short url
     #
-    longurl, msg, redirect_status_code, title, description, image_url, byline = s.get_long(request)
+    l, redirect_status_code = s.get_long(request)
     #
     # if found, redirect to it; otherwise, 404
     #
-    if longurl:
+    if l:
         public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
         public_version = VERSION
         ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
@@ -56,12 +56,13 @@ def get_handler(request):
                 {
                     'ga_enabled': ga_enabled,
                     'ga_id': ga_id,
-                    'image_url': image_url,
-                    'inpage': description,
-                    'longurl': longurl,
-                    'longurl_byline': byline,
-                    'longurl_title': title,
-                    'longurl_description': description,
+                    'image_url': l.image_url,
+                    'inpage': l.description,
+                    'longurl': l.longurl,
+                    'longurl_byline': l.byline,
+                    'longurl_description': l.description,
+                    'longurl_site_name': l.site_name,
+                    'longurl_title': l.title,
                     'shorturl': s.normalized_shorturl,
                     'status_code': redirect_status_code,
                     'verbose_name': public_name,
