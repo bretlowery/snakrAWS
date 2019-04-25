@@ -316,6 +316,10 @@ class LongURLs(models.Model):
             max_length=100,
             null=False,
             blank=True)
+    site_name = models.CharField(
+            max_length=100,
+            null=False,
+            blank=True)
 
     class Meta:
         app_label = TABLE_PREFIX
