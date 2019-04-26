@@ -270,14 +270,14 @@ def fetch_doctype(targetdoc):
             'text/html': 'html',
             'application/pdf': 'pdf',
             'text/plain': 'text',
-            }.get(x, None)
+            }.get(x.split(";")[0], None)
 
     if 'content-type' in targetdoc.headers:
         dt = __mt(targetdoc.headers['content-type'])
     return dt
 
 
-def get_target_meta(url, request):
+def get_target_meta(url, request=None):
 
     def _get_html_title(soupobj):
         val = ""
@@ -335,7 +335,7 @@ def get_target_meta(url, request):
     description = ""
     image_url = ""
     site_name = ""
-    doctype, target, soup = inspect_url(request, url)
+    doctype, target, soup = inspect_url(url, request)
     if doctype and target:
         if target.status_code == 200:
             if doctype == "html":
@@ -555,21 +555,23 @@ def requested_last(request):
     return get_request_path(request) == "/last"
 
 
-def inspect_url(request, url):
+def inspect_url(url, request=None):
     doctype = None
     soup = None
     target = None
     try:
-        target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
+        if request:
+            target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
+        else:
+            target = requests.get(url, data=None)
     except:
         pass
     if target:
         if target.status_code == 200:
-            content = target.content
             doctype = fetch_doctype(target)
             if doctype == 'html':
                 try:
-                    soup = BeautifulSoup(content, "html.parser")
+                    soup = BeautifulSoup(target.content, "html.parser")
                 except:
                     soup = None
                     pass
