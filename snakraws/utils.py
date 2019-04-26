@@ -262,6 +262,21 @@ def get_wsgirequest_headers(request):
     return headers
 
 
+def fetch_doctype(targetdoc):
+    dt = None
+
+    def __mt(x):
+        return {
+            'text/html': 'html',
+            'application/pdf': 'pdf',
+            'text/plain': 'text',
+            }.get(x, None)
+
+    if 'content-type' in targetdoc.headers:
+        dt = __mt(targetdoc.headers['content-type'])
+    return dt
+
+
 def get_target_meta(url, request):
 
     def _get_html_title(soupobj):
@@ -316,45 +331,21 @@ def get_target_meta(url, request):
             pass
         return val
 
-    def _fetch_doctype(targetdoc):
-        dt = None
-
-        def __mt(x):
-            return {
-                'text/html': 'html',
-                'application/pdf': 'pdf',
-                'text/plain': 'text',
-                }.get(x, None)
-
-        if 'content-type' in targetdoc.headers:
-            dt = __mt(targetdoc.headers['content-type'])
-        return dt
-
-    target = None
-    try:
-        target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
-    except:
-        pass
     title = url
     description = ""
     image_url = ""
     site_name = ""
-    if target:
+    doctype, target, soup = inspect_url(request, url)
+    if doctype and target:
         if target.status_code == 200:
-            content = target.content
-            doctype = _fetch_doctype(target)
-            if doctype == 'html':
-                try:
-                    soup = BeautifulSoup(content, "html.parser")
-                except:
-                    soup = None
-                    pass
-                title = _get_html_title(soup)
-                description = _get_html_description(soup)
-                image_url = _get_image_url(soup)
-                site_name = _get_site_name(soup)
+            if doctype == "html":
+                if soup:
+                    title = _get_html_title(soup)
+                    description = _get_html_description(soup)
+                    image_url = _get_image_url(soup)
+                    site_name = _get_site_name(soup)
             elif doctype == "pdf":
-                title = _get_pdf_title(content)
+                title = _get_pdf_title(target.content)
     if not title:
         title = url
     title = fit_text(title, "", 100)
@@ -562,4 +553,25 @@ def requested_directive(request):
 
 def requested_last(request):
     return get_request_path(request) == "/last"
+
+
+def inspect_url(request, url):
+    doctype = None
+    soup = None
+    target = None
+    try:
+        target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
+    except:
+        pass
+    if target:
+        if target.status_code == 200:
+            content = target.content
+            doctype = fetch_doctype(target)
+            if doctype == 'html':
+                try:
+                    soup = BeautifulSoup(content, "html.parser")
+                except:
+                    soup = None
+                    pass
+    return doctype, target, soup
 

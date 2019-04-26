@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% load social_share %}
+{% load socialmedia %}
 {% comment %}
 {% load recaptcha3 %}
 
@@ -93,12 +93,12 @@
                                     <br/><strong>{% trans "Click below to post this short URL to:" %}</strong><br/>
                                         {% post_to_facebook shorturl "Facebook" %}
                                     {% if post_byline %}
-                                        {% post_to_linkedin post_byline shorturl "LinkedIn" %}
+                                        {% post_to_linkedin post_byline shorturl post_description "LinkedIn" %}
                                         {% post_to_reddit post_byline shorturl "Reddit" %}
                                         {% post_to_telegram post_byline shorturl "Telegram" %}
                                         {% post_to_twitter post_byline shorturl "Twitter" %}
                                     {% else %}
-                                        {% post_to_linkedin post_title shorturl "LinkedIn" %}
+                                        {% post_to_linkedin post_title shorturl post_description "LinkedIn" %}
                                         {% post_to_reddit post_title shorturl "Reddit" %}
                                         {% post_to_telegram post_title shorturl "Telegram" %}
                                         {% post_to_twitter post_title shorturl "Twitter" %}
