@@ -73,9 +73,11 @@ class LongURL:
         self.longurl_is_preencoded = preencoded
         self.longurl = lurl
         self.title, self.description, self.image_url, self.site_name = get_target_meta(self.normalized_longurl, request)
-        self.title = fit_text(self.title, "", 100)
-        self.byline = fit_text(self.title if not bl else bl, "", 100)
-        self.description = fit_text(self.description if not de else de, "", 300)
+        #self.title = fit_text(self.title, "", 100)
+        #self.byline = fit_text(self.title if not bl else bl, "", 100)
+        self.byline = self.title if not bl else bl
+        #self.description = fit_text(self.description if not de else de, "", 300)
+        self.description = self.description if not de else de
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
 

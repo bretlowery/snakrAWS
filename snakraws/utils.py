@@ -527,7 +527,7 @@ def is_profane(url):
     return False
 
 
-def fit_text(text, suffix, maxlen=280):
+def fit_text(text, suffix="", maxlen=300):
     ltmax = maxlen - len(suffix) - 1
     if len(text) > ltmax:
         return text[:ltmax - 3] + '... ' + suffix
