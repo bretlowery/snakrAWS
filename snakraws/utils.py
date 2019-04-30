@@ -13,14 +13,13 @@ import requests
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-
 from profanity_check import predict as PredictProfanity
 from profanity_filter import ProfanityFilter
 
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
 
-from bs4 import BeautifulSoup, Doctype as BS4Doctype
+from bs4 import BeautifulSoup
 
 
 # DO NOT CHANGE THESE CONSTANTS AT ALL EVER
@@ -270,87 +269,15 @@ def fetch_doctype(targetdoc):
             'text/html': 'html',
             'application/pdf': 'pdf',
             'text/plain': 'text',
-            }.get(x.split(";")[0], None)
+            }.get(x, None)
 
     if 'content-type' in targetdoc.headers:
-        dt = __mt(targetdoc.headers['content-type'])
-    return dt
-
-
-def get_target_meta(url, request=None):
-
-    def _get_html_title(soupobj):
-        val = ""
-        og_title = soupobj.find("meta", property="og:title")
-        if og_title:
-            val = og_title.attrs["content"].strip()
+        if ';' in targetdoc.headers['content-type']:
+            dt = targetdoc.headers['content-type'].split(";")[0]
         else:
-            try:
-                val = soupobj.title.string.strip()
-            except:
-                pass
-        return val
-
-    def _get_html_description(soupobj):
-        val = ""
-        og_description = soupobj.find("meta", property="og:description")
-        if og_description:
-            val = og_description.attrs["content"].strip()
-        return val
-
-    def _get_image_url(soupobj):
-        val = ""
-        og_image_url = soupobj.find("meta", property="og:image")
-        if og_image_url:
-            val = og_image_url.attrs["content"]
-            if val:
-                if is_url_valid(val):
-                    parts = urlparts(val)
-                    if parts:
-                        if 'http' not in parts.scheme.lower():
-                            val = ""
-        return val
-
-    def _get_site_name(soupobj):
-        val = ""
-        og_description = soupobj.find("meta", property="og:site_name")
-        if og_description:
-            val = og_description.attrs["content"].strip()
-        return val
-
-    def _get_pdf_title(contentbytestream):
-        import io
-        from PyPDF2 import PdfFileReader
-        val = ""
-        try:
-            with io.BytesIO(contentbytestream) as pdf:
-                pdfr = PdfFileReader(pdf)
-                pdfi = pdfr.getDocumentInfo()
-                val = str(pdfi.title).strip()
-        except:
-            pass
-        return val
-
-    title = url
-    description = ""
-    image_url = ""
-    site_name = ""
-    doctype, target, soup = inspect_url(url, request)
-    if doctype and target:
-        if target.status_code == 200:
-            if doctype == "html":
-                if soup:
-                    title = _get_html_title(soup)
-                    description = _get_html_description(soup)
-                    image_url = _get_image_url(soup)
-                    site_name = _get_site_name(soup)
-            elif doctype == "pdf":
-                title = _get_pdf_title(target.content)
-    if not title:
-        title = url
-    title = fit_text(title, "", 100)
-    return title, description, image_url, site_name
-
+            dt = targetdoc.headers['content-type']
+        dt = __mt(dt)
+    return dt
 
 def is_shortpath_valid(shortpath):
     test = shortpath.lower().strip()
@@ -555,15 +482,24 @@ def requested_last(request):
     return get_request_path(request) == "/last"
 
 
-def inspect_url(url, request=None):
+def inspect_url(url, request=None, proxies=None):
     doctype = None
     soup = None
     target = None
+    current_proxies = {}
     try:
-        if request:
-            target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
+        if proxies:
+            current_proxies = proxies.get
+            if current_proxies:
+                if request:
+                    target = requests.get(url, data=None, headers=get_wsgirequest_headers(request), proxies=current_proxies)
+                else:
+                    target = requests.get(url, data=None, proxies=current_proxies)
         else:
-            target = requests.get(url, data=None)
+            if request:
+                target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
+            else:
+                target = requests.get(url, data=None)
     except:
         pass
     if target:
@@ -575,5 +511,7 @@ def inspect_url(url, request=None):
                 except:
                     soup = None
                     pass
-    return doctype, target, soup
+    return doctype, target, soup, current_proxies
+
+
 

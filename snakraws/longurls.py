@@ -3,21 +3,21 @@ LongURLs.py contains the logic necessary to consume a long URL and return a shor
 '''
 
 from urllib.parse import urlparse
-# from filetransfers.api import serve_file
 
 from django.http import Http404
 from django.db import transaction as xaction
 from django.forms import ValidationError
+from django.core.cache import cache
 
 from snakraws import settings
-from snakraws.settings import CANONICAL_MESSAGES
 from snakraws.models import LongURLs, ShortURLs
 from snakraws.shorturls import ShortURL
 from snakraws.persistence import SnakrLogger
 from snakraws.security import get_useragent_or_403_if_bot
 from snakraws.utils import get_json, is_url_valid, is_image, get_decodedurl, get_encodedurl, \
-    get_longurlhash, get_host, get_referer, is_profane, get_target_meta, fit_text, get_message, get_shorturlhash
+    get_longurlhash, get_host, get_referer, is_profane, fit_text, get_message, get_shorturlhash, inspect_url, urlparts
 from snakraws.ips import SnakrIP
+from snakraws.proxies import Proxies
 
 
 class LongURL:
@@ -72,12 +72,9 @@ class LongURL:
         self.normalized_longurl_scheme = urlparse(lurl).scheme.lower()
         self.longurl_is_preencoded = preencoded
         self.longurl = lurl
-        self.title, self.description, self.image_url, self.site_name = get_target_meta(self.normalized_longurl, request)
-        #self.title = fit_text(self.title, "", 100)
-        #self.byline = fit_text(self.title if not bl else bl, "", 100)
-        self.byline = self.title if not bl else bl
-        #self.description = fit_text(self.description if not de else de, "", 300)
-        self.description = self.description if not de else de
+        self.meta = Meta(self.normalized_longurl, request)
+        self.byline = self.meta.title if not bl else bl
+        self.meta.description = self.meta.description if not de else de
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
 
@@ -147,11 +144,11 @@ class LongURL:
             dl = LongURLs(hash=self.hash,
                           longurl=self.normalized_longurl,
                           originally_encoded=originally_encoded,
-                          title=self.title,
-                          description=self.description,
-                          image_url=self.image_url,
+                          title=self.meta.title,
+                          description=self.meta.description,
+                          image_url=self.meta.image_url,
                           byline=self.byline,
-                          site_name=self.site_name,
+                          site_name=self.meta.site_name,
                           is_active=True
                           )
             dl.save()
@@ -229,3 +226,85 @@ class LongURL:
             # 4. Return the short url
             #
         return s.shorturl, msg
+
+
+class Meta:
+
+    def __init__(self, url, request=None):
+
+        def _get_html_title(soupobj):
+            val = ""
+            og_title = soupobj.find("meta", property="og:title")
+            if og_title:
+                val = og_title.attrs["content"].strip()
+            else:
+                try:
+                    val = soupobj.title.string.strip()
+                except:
+                    pass
+            return val
+
+        def _get_html_description(soupobj):
+            val = ""
+            og_description = soupobj.find("meta", property="og:description")
+            if og_description:
+                val = og_description.attrs["content"].strip()
+            return val
+
+        def _get_image_url(soupobj):
+            val = ""
+            og_image_url = soupobj.find("meta", property="og:image")
+            if og_image_url:
+                val = og_image_url.attrs["content"]
+                if val:
+                    if is_url_valid(val):
+                        parts = urlparts(val)
+                        if parts:
+                            if 'http' not in parts.scheme.lower():
+                                val = ""
+            return val
+
+        def _get_site_name(soupobj):
+            val = ""
+            og_description = soupobj.find("meta", property="og:site_name")
+            if og_description:
+                val = og_description.attrs["content"].strip()
+            return val
+
+        def _get_pdf_title(contentbytestream):
+            import io
+            from PyPDF2 import PdfFileReader
+            val = ""
+            try:
+                with io.BytesIO(contentbytestream) as pdf:
+                    pdfr = PdfFileReader(pdf)
+                    pdfi = pdfr.getDocumentInfo()
+                    val = str(pdfi.title).strip()
+            except:
+                pass
+            return val
+
+        self.title = url
+        self.description = ""
+        self.image_url = ""
+        self.site_name = ""
+        proxies = cache.get('proxies')
+        if not proxies:
+            proxies = Proxies()  # (request)
+            cache.set('proxies', proxies)
+        doctype, target, soup, selected_proxy = inspect_url(url, request, proxies)
+        if doctype and target:
+            if target.status_code == 200:
+                if doctype == "html":
+                    if soup:
+                        self.title = _get_html_title(soup)
+                        self.description = _get_html_description(soup)
+                        self.image_url = _get_image_url(soup)
+                        self.site_name = _get_site_name(soup)
+                elif doctype == "pdf":
+                    self.title = _get_pdf_title(target.content)
+        if not self.title:
+            self.title = url
+        self.title = fit_text(self.title, "", 100)
+        self.proxy = selected_proxy
+        return

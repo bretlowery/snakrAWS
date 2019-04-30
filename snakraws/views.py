@@ -106,13 +106,11 @@ def post_handler(request, **kwargs):
     # make response data
     #
     response_data['byline'] = l.byline
-    response_data['description'] = l.description
-    response_data['image_url'] = l.image_url
+    response_data['description'] = l.meta.description
+    response_data['image_url'] = l.meta.image_url
     response_data['message'] = msg
     response_data['shorturl'] = shorturl
-    response_data['title'] = l.title
-    if l.title:
-        response_data['socialmediapost'] = fit_text(l.title, shorturl, 280)
+    response_data['title'] = l.meta.title
     #
     #
     #
