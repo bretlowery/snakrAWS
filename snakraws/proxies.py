@@ -1,6 +1,7 @@
-import re
 import requests
 from itertools import cycle
+import ipaddress
+import logging
 
 from django.conf import settings
 
@@ -21,22 +22,30 @@ class Proxies:
         plurl = 'https://free-proxy-list.net/'
         doctype, target, soup = self._inspect_url(plurl)  #, request=request)
         if soup:
-            table = soup.find('table', attrs={'id': 'proxylisttable'})
-            if table:
-                table_body = table.find('tbody')
-                if table_body:
-                    rows = table_body.find_all('tr')
-                    if rows:
-                        for row in rows:
-                            cell = row.findChildren('td')
-                            if cell[0] and cell[1] and cell[2] and cell[6]:
-                                if _gt(cell[2]) == 'us':
-                                    proxy = '%s:%s' % (_gt(cell[0]), _gt(cell[1]))
-                                    is_https = _gt(cell[6])
-                                    if is_https == 'yes':
-                                        httpsproxies.append(proxy)
-                                    else:
-                                        httpproxies.append(proxy)
+            try:
+                table = soup.find('table', attrs={'id': 'proxylisttable'})
+                table_body = table.find('tbody') if table else None
+                rows = table_body.find_all('tr') if table_body else None
+                for row in rows:
+                    cell = row.findChildren('td')
+                    if cell[0] and cell[1] and cell[2] and cell[6]:
+                        if _gt(cell[2]) == 'us':
+                            ip = _gt(cell[0])
+                            port = _gt(cell[1])
+                            if ipaddress.ip_address(ip):
+                                if isinstance(int, port):
+                                    if port > 0:
+                                        proxy = '%s:%s' % (ip, port)
+                                        is_https = _gt(cell[6])
+                                        if is_https == 'yes':
+                                            httpsproxies.append(proxy)
+                                        else:
+                                            httpproxies.append(proxy)
+            except Exception as e:
+                logging.log(logging.WARNING, "ERROR parsing proxy web site: %s" % str(e))
+                httpproxies = None
+                httpsproxies = None
+                pass
 
         if httpproxies:
             httpproxies = list(set(httpproxies))   # remove dupes, if any
@@ -52,11 +61,11 @@ class Proxies:
 
     @property
     def next_http_proxy(self):
-        return next(self.http_proxy_pool)
+        return next(self.http_proxy_pool) if self.http_proxy_pool else None
 
     @property
     def next_https_proxy(self):
-        return next(self.https_proxy_pool)
+        return next(self.https_proxy_pool) if self.https_proxy_pool else None
 
     @property
     def get(self):
@@ -106,7 +115,6 @@ class Proxies:
             #else:
             target = requests.get(url, data=None)
         except Exception as e:
-            exx = e
             pass
         if target:
             if target.status_code == 200:
