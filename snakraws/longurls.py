@@ -76,6 +76,8 @@ class LongURL:
         self.longurl = lurl
         self.meta = Meta(self.normalized_longurl, request)
         self.byline = self.meta.title if not bl else bl
+        self.byline = '%s: %s' % (self.meta.site_name, self.byline) \
+            if self.meta.site_name and '%s: ' % self.meta.site_name not in self.byline else self.byline
         self.meta.description = self.meta.description if not de else de
         self.hash = get_longurlhash(self.normalized_longurl)
         self.id = -1
@@ -289,6 +291,7 @@ class Meta:
             return val
 
         self.status = 0
+        self.status_msg = ""
         self.title = url
         self.description = ""
         self.image_url = ""
