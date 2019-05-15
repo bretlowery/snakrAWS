@@ -320,6 +320,13 @@ class LongURLs(models.Model):
             max_length=100,
             null=False,
             blank=True)
+    meta_status = models.IntegerField(
+            unique=False,
+            null=False)
+    meta_status_msg = models.CharField(
+            max_length=1024,
+            null=False,
+            blank=True)
 
     class Meta:
         app_label = TABLE_PREFIX

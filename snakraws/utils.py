@@ -486,6 +486,7 @@ def inspect_url(url, request=None, proxies=None):
     doctype = None
     soup = None
     target = None
+    err = None
     current_proxies = {}
     try:
         if proxies:
@@ -500,9 +501,11 @@ def inspect_url(url, request=None, proxies=None):
                 target = requests.get(url, data=None, headers=get_wsgirequest_headers(request))
             else:
                 target = requests.get(url, data=None)
-    except:
+    except Exception as e:
+        err = str(e)[:1024]
         pass
     if target:
+        err = target.reason[:1024] if not err else err
         if target.status_code == 200:
             doctype = fetch_doctype(target)
             if doctype == 'html':
@@ -511,7 +514,7 @@ def inspect_url(url, request=None, proxies=None):
                 except:
                     soup = None
                     pass
-    return doctype, target, soup, current_proxies
+    return doctype, target, soup, current_proxies, err
 
 
 

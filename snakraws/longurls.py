@@ -29,6 +29,8 @@ class LongURL:
         vp = kwargs.pop('vp', None)
         bl = kwargs.pop('bl', None)
         de = kwargs.pop('de', None)
+        self.bl = bl
+        self.de = de
 
         self.event = SnakrLogger()
 
@@ -149,6 +151,8 @@ class LongURL:
                           image_url=self.meta.image_url,
                           byline=self.byline,
                           site_name=self.meta.site_name,
+                          meta_status=self.meta.status,
+                          meta_status_msg=self.meta.status_msg,
                           is_active=True
                           )
             dl.save()
@@ -284,6 +288,7 @@ class Meta:
                 pass
             return val
 
+        self.status = 0
         self.title = url
         self.description = ""
         self.image_url = ""
@@ -292,8 +297,10 @@ class Meta:
         if not proxies:
             proxies = Proxies()  # (request)
             cache.set('proxies', proxies)
-        doctype, target, soup, selected_proxy = inspect_url(url, request, proxies)
+        doctype, target, soup, selected_proxy, err = inspect_url(url, request, proxies)
         if doctype and target:
+            self.status = target.status_code
+            self.status_msg = err
             if target.status_code == 200:
                 if doctype == "html":
                     if soup:
