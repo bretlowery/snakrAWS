@@ -48,7 +48,7 @@ def get_handler(request):
     if l:
         if redirect_status_code == 991:
             # return /last/ref
-            return lambda r: HttpResponse("%s" % l, content_type="text/plain")
+            return HttpResponse("%s" % l, content_type="text/plain")
         else:
             public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
             public_version = VERSION
