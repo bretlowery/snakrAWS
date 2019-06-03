@@ -111,7 +111,11 @@ class ShortURL:
         sparts = urlparse(dsurl)
         if requested_last_shorturlref(request):
             latest = ShortURLs.objects.filter(is_active=True).order_by('-id')[0]
-            return latest.shorturl, 991
+            if latest:
+                ll = LongURLs.objects.get(id=latest.longurl_id, is_active=True)
+                if ll:
+                    return "%s<br/><br/>%s<br/><br/>%s" % (latest.shorturl, ll.byline, ll.longurl), 991
+            raise Http404
         elif requested_last(request):
             latest = ShortURLs.objects.filter(is_active=True).order_by('-id')[0]
             if latest:
