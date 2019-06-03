@@ -46,14 +46,26 @@ def get_handler(request):
     # if found, redirect to it; otherwise, 404
     #
     if l:
+        public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
+        public_version = VERSION
+        ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
+        ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
         if redirect_status_code == 991:
             # return /last/ref
-            return HttpResponse("%s" % l, content_type="text/plain")
+            return render(
+                    request,
+                    'lastref.html',
+                    {
+                        'ga_enabled': ga_enabled,
+                        'ga_id': ga_id,
+                        'inpage': '%s' % l,
+                        'shorturl': s.normalized_shorturl,
+                        'verbose_name': public_name,
+                        'version': public_version,
+                        'status_code': 200
+                    }
+            )
         else:
-            public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
-            public_version = VERSION
-            ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
-            ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
             return render(
                     request,
                     'redirectr.html',

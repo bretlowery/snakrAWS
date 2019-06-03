@@ -1,0 +1,34 @@
+{% load filters %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- {{ public_name }} {{ version }} -->
+        <meta charset="UTF-8">
+        <!-- prevent favicon -->
+        <link rel="icon" href="data:;base64,=">
+        <title>SnakrAWS /last/ref</title>
+    {% if ga_enabled %}
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id='{{ ga_id }}'"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '{{ ga_id }}');
+          gtag('event', 'lastref', {
+              'event_category': '/last/ref',
+              'event_action': 'lastref',
+              'event_label': '/last/ref',
+              'value': '/last/ref',
+              'title': 'SnakrAWS /last/ref'
+          });
+        </script>
+    {% endif %}
+         <style>
+            body {background-color: #FFFFFF;}
+        </style>
+    </head>
+    <body>
+    {{ inpage }}
+    </body>
+</html>
