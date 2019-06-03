@@ -46,29 +46,33 @@ def get_handler(request):
     # if found, redirect to it; otherwise, 404
     #
     if l:
-        public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
-        public_version = VERSION
-        ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
-        ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
-        return render(
-                request,
-                'redirectr.html',
-                {
-                    'ga_enabled': ga_enabled,
-                    'ga_id': ga_id,
-                    'image_url': l.image_url,
-                    'inpage': l.description,
-                    'longurl': l.longurl,
-                    'longurl_byline': l.byline,
-                    'longurl_description': l.description,
-                    'longurl_site_name': l.site_name,
-                    'longurl_title': l.title,
-                    'shorturl': s.normalized_shorturl,
-                    'status_code': redirect_status_code,
-                    'verbose_name': public_name,
-                    'version': public_version,
-                }
-        )
+        if redirect_status_code == 991:
+            # return /last/ref
+            return lambda r: HttpResponse("%s" % l, content_type="text/plain")
+        else:
+            public_name = getattr(settings, "PUBLIC_NAME", getattr(settings, "VERBOSE_NAME", "SnakrAWS"))
+            public_version = VERSION
+            ga_enabled = getattr(settings, "ENABLE_GOOGLE_ANALYTICS", False)
+            ga_id = getattr(settings, "GOOGLE_ANALYTICS_WEB_PROPERTY_ID", "")
+            return render(
+                    request,
+                    'redirectr.html',
+                    {
+                        'ga_enabled': ga_enabled,
+                        'ga_id': ga_id,
+                        'image_url': l.image_url,
+                        'inpage': l.description,
+                        'longurl': l.longurl,
+                        'longurl_byline': l.byline,
+                        'longurl_description': l.description,
+                        'longurl_site_name': l.site_name,
+                        'longurl_title': l.title,
+                        'shorturl': s.normalized_shorturl,
+                        'status_code': redirect_status_code,
+                        'verbose_name': public_name,
+                        'version': public_version,
+                    }
+            )
 
     return Http404
 

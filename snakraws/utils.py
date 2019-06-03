@@ -482,6 +482,10 @@ def requested_last(request):
     return get_request_path(request) == "/last"
 
 
+def requested_last_shorturlref(request):
+    return get_request_path(request) == "/last/ref"
+
+
 def inspect_url(url, request=None, proxies=None):
     doctype = None
     soup = None
