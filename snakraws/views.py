@@ -10,6 +10,7 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpRespo
 from django.utils.translation import ugettext_lazy as _
 from django.forms.forms import NON_FIELD_ERRORS
 from django.contrib.auth.decorators import login_required
+from django.utils.safestring import mark_safe
 
 from snakraws import settings
 from snakraws.shorturls import ShortURL
@@ -58,8 +59,8 @@ def get_handler(request):
                     {
                         'ga_enabled': ga_enabled,
                         'ga_id': ga_id,
-                        'inpage': '%s' % l,
-                        'shorturl': s.normalized_shorturl,
+                        'inpage': mark_safe(l),
+                        'shorturl': mark_safe(s.normalized_shorturl),
                         'verbose_name': public_name,
                         'version': public_version,
                         'status_code': 200
@@ -72,14 +73,14 @@ def get_handler(request):
                     {
                         'ga_enabled': ga_enabled,
                         'ga_id': ga_id,
-                        'image_url': l.image_url,
+                        'image_url': mark_safe(l.image_url),
                         'inpage': l.description,
-                        'longurl': l.longurl,
+                        'longurl': mark_safe(l.longurl),
                         'longurl_byline': l.byline,
                         'longurl_description': l.description,
                         'longurl_site_name': l.site_name,
                         'longurl_title': l.title,
-                        'shorturl': s.normalized_shorturl,
+                        'shorturl': mark_safe(s.normalized_shorturl),
                         'status_code': redirect_status_code,
                         'verbose_name': public_name,
                         'version': public_version,
