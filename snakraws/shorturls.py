@@ -123,9 +123,22 @@ class ShortURL:
             if latest:
                 dsurl = latest.shorturl
                 surl = dsurl
-                sparts = urlparse(dsurl)
             else:
                 raise Http404
+
+        # 2019-6-21 bml BUGFIX if SITE_MODE <> DATABASE_MODE (meaning we're debugging),
+        # replace the host name in the normalized short url with SHORTURL_HOST b4 lookup
+        if settings.SITE_MODE != settings.DATABASE_MODE:
+            # can't update sparts directly as methods/properties are private, so do this roundabout hacky thing
+            tmp = list(sparts)
+            if settings.SSL_ENABLED:
+                tmp[0] = "https"
+            else:
+                tmp[0] = "http"
+            tmp[1] = settings.SHORTURL_HOST
+            surl = urlunparse(tmp)
+            dsurl = get_decodedurl(surl)
+            sparts = urlparse(dsurl)
 
         if surl == dsurl:
             preencoded = False
@@ -134,6 +147,7 @@ class ShortURL:
             l = dsurl
         self.normalized_shorturl_scheme = sparts.scheme.lower()
         self.shorturl_is_preencoded = preencoded
+
         self.normalized_shorturl = urlunparse(sparts)
         if self.normalized_shorturl.endswith("/"):
             self.normalized_shorturl = self.normalized_shorturl[:-1]
@@ -198,7 +212,9 @@ class ShortURL:
                                  longurl=l,
                                  shorturl=s,
                                  status_code=404)
-        l.longurl = get_decodedurl(l.longurl)
+        # 2019-6-21 bml BUGFIX
+        if l.originally_encoded:
+            l.longurl = get_decodedurl(l.longurl)
         #
         # Log that a permanent redirect response to the matching long url is about to occur
         #
