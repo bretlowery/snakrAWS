@@ -3,6 +3,7 @@ LongURLs.py contains the logic necessary to consume a long URL and return a shor
 '''
 
 from urllib.parse import urlparse
+from urllib.request import urlopen
 
 from django.http import Http404
 from django.db import transaction as xaction
@@ -34,7 +35,6 @@ class LongURL:
 
         self.event = SnakrLogger()
 
-        # get IP and technographic info from the request
         bot_name, self.useragent = get_useragent_or_403_if_bot(request)
         if bot_name:
             raise self.event.log(request=request, event_type='B', messagekey='ROBOT', value='Known Bot {%}' % bot_name, status_code=-403)
@@ -64,9 +64,19 @@ class LongURL:
         if ShortURLs.objects.filter(hash=get_shorturlhash(dlurl)).exists():
             raise ValidationError(get_message("DISALLOW_DOUBLE_SHORTENING"))
 
+        # 2019-6-21 bml BUGFIX issue where some sites don't accept encoded versions of their url and return 403s or something instead
+        # this isn't a reliable check since many sites will 403 this as a bad traffic source anyway since it's coming from an AWS EC2 instance
         if lurl == dlurl:
             preencoded = False
             self.normalized_longurl = get_encodedurl(dlurl)
+            httpcode = 403
+            try:
+                httpcode = urlopen(self.normalized_longurl).getcode()
+            except:
+                pass
+            if httpcode != 200:
+                preencoded = True
+                self.normalized_longurl = lurl
         else:
             preencoded = True
             self.normalized_longurl = lurl
@@ -175,7 +185,7 @@ class LongURL:
                            is_active=True
                            )
             #
-            # 6. Is there an associated image? If so, download it to static,
+            # 6. *TBD, MAYBE* Is there an associated image? If so, download it to static.
             #
             # if self.linked_image:
             #    ft = file
