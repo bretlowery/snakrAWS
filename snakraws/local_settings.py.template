@@ -42,7 +42,7 @@ VERBOSE_LOGGING = True
 SSL_ENABLED = False
 ENABLE_BOT_DETECTION = False
 
-if SITE_MODE == 'dev':
+if DATABASE_MODE == 'dev':
     SHORTURL_HOST = "localhost:8000"
 else:
     SHORTURL_HOST = "your.url.here"
