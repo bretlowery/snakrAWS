@@ -15,20 +15,32 @@ import string
 def _(value):
     return value
 
-
 # don't run with debug turned on in production!
 DEBUG = True
+TEST_LOW_CAPTCHA_SCORE = False
+SITE_MODE = 'dev'
+DATABASE_MODE = 'dev'
 SITE_ID = 1
 APP_NAME = "snakraws"
 VERBOSE_NAME = "SnakrAWS"
+PUBLIC_NAME = VERBOSE_NAME
 PAGE_TITLE = "Snakr All-Vegetable URL Shortening"
 AWS_ELASTIC_IP = "your.aws.elastic.ip"
-SITE_MODE = 'dev'
-DATABASE_MODE = 'dev'
+
+# Generated on the Google site
 ENABLE_ANALYTICS = True
+ENABLE_GOOGLE_ANALYTICS = True if SITE_MODE == 'prod' else False
+GOOGLE_ANALYTICS_WEB_PROPERTY_ID = "your GA wpid"
+# Generated on the FB site, fopr sharing to FB
+FACEBOOK_APP_ID="your FB app id"
+# Generated on the LinkedIn site, for sharing to LI
+LINKEDIN_CLIENT_ID = "your LI client ID"
+LINKEDIN_CLIENT_SECRET = "your LI client secret"
+
 ENABLE_LOGGING = True
 VERBOSE_LOGGING = True
-SSL_ENABLED = True
+SSL_ENABLED = False
+ENABLE_BOT_DETECTION = False
 
 if SITE_MODE == 'dev':
     SHORTURL_HOST = "localhost:8000"
@@ -57,8 +69,8 @@ STATIC_URL = '/static/'
 # DEEP does a deep blacklist check, BUT it adds 2-10x to the time needed to create a short URL
 # Note this is ONLY done once at short URL generation, NOT at actual subsequent short URL lookup and redirection time
 #
-ENABLE_FAST_PROFANITY_CHECKING = True
-ENABLE_DEEP_PROFANITY_CHECKING = True
+ENABLE_FAST_PROFANITY_CHECKING = False
+ENABLE_DEEP_PROFANITY_CHECKING = False
 #
 # If enabled, the following setting prevents the user from creating a short URL for any target (long) URL
 # that contains profane language: JUST the URL; it does NOT check the target's content AT the URL. Note that this check
@@ -67,7 +79,7 @@ ENABLE_DEEP_PROFANITY_CHECKING = True
 #
 # The same Fast and/or Deep checks will be made as the short URL, depending on the settings above.
 #
-ENABLE_LONG_URL_PROFANITY_CHECKING = True
+ENABLE_LONG_URL_PROFANITY_CHECKING = False
 
 # Postgres DB
 if DATABASE_MODE == 'dev':
@@ -258,6 +270,7 @@ RESERVED_PATHS = [
     _('logout'),
     _('profile'),
     _('admin'),
+    _('last'),
     'localhost',
     'api',
     SHORTENING_POSTBACK,
